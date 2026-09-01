@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   User,
   FolderGit2,
+  Wrench,
   Briefcase,
   GraduationCap,
   Settings,
@@ -34,6 +35,13 @@ export default function DashboardNav() {
       href: "/dashboard/projects",
       icon: FolderGit2,
       active: pathname.startsWith("/dashboard/projects"),
+      disabled: false,
+    },
+    {
+      label: "Skills",
+      href: "/dashboard/skills",
+      icon: Wrench,
+      active: pathname.startsWith("/dashboard/skills"),
       disabled: false,
     },
     {
