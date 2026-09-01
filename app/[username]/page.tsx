@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import PortfolioRenderer from "@/components/portfolio/PortfolioRenderer";
-import { PortfolioData } from "@/types/portfolio";
+import { PortfolioData, PortfolioCustomization } from "@/types/portfolio";
+import { DEFAULT_CUSTOMIZATION } from "@/lib/constants/portfolio-customization";
 
 interface PublicPortfolioPageProps {
   params: Promise<{
@@ -14,10 +15,10 @@ export async function generateMetadata({
   params,
 }: PublicPortfolioPageProps): Promise<Metadata> {
   const { username } = await params;
-  const normalizedUsername = username.toLowerCase();
+  const decodedUsername = decodeURIComponent(username);
 
   const user = await prisma.user.findUnique({
-    where: { username: normalizedUsername },
+    where: { username: decodedUsername },
     select: {
       name: true,
       username: true,
@@ -34,40 +35,52 @@ export async function generateMetadata({
   if (!user) {
     return {
       title: "User Not Found — MyFolio",
-      description: "The requested user profile does not exist.",
     };
   }
 
-  const name = user.profile?.fullName || user.name || user.username || username;
-  const headline = user.profile?.headline ? ` | ${user.profile.headline}` : "";
-  const bio = user.profile?.bio || `Official developer portfolio of ${name} hosted on MyFolio.`;
+  const titleName = user.profile?.fullName || user.name || user.username || "User";
+  const titleHeadline = user.profile?.headline
+    ? ` — ${user.profile.headline}`
+    : " — Portfolio";
 
   return {
-    title: `${name}${headline}`,
-    description: bio.length > 160 ? `${bio.slice(0, 157)}...` : bio,
+    title: `${titleName}${titleHeadline} | MyFolio`,
+    description:
+      user.profile?.bio?.slice(0, 160) ||
+      `View ${titleName}'s professional portfolio, projects, skills, experience, and education on MyFolio.`,
   };
 }
 
 export default async function PublicPortfolioPage({
   params,
 }: PublicPortfolioPageProps) {
-  const { username } = await params;
-  const normalizedUsername = username.toLowerCase();
+  const { username: rawUsername } = await params;
+  const username = decodeURIComponent(rawUsername);
 
-  // Query PostgreSQL database for user, profile, portfolioSettings, and sections
+  // Query user by unique username with related profile, projects, skills, experience, education, portfolioSettings
   const user = await prisma.user.findUnique({
-    where: { username: normalizedUsername },
+    where: { username },
     select: {
       id: true,
       name: true,
       username: true,
-      createdAt: true,
-      profile: true,
-      portfolioSettings: {
+      profile: {
         select: {
-          template: true,
+          fullName: true,
+          headline: true,
+          bio: true,
+          profileImage: true,
+          location: true,
+          website: true,
+          github: true,
+          linkedin: true,
+          email: true,
+          phone: true,
+          showEmail: true,
+          showPhone: true,
         },
       },
+      portfolioSettings: true,
       projects: {
         select: {
           id: true,
@@ -180,12 +193,29 @@ export default async function PublicPortfolioPage({
     })),
   };
 
-  const selectedTemplate = user.portfolioSettings?.template || "MODERN";
+  const dbSettings = user.portfolioSettings;
+  const selectedTemplate = dbSettings?.template || "MODERN";
+
+  const customization: PortfolioCustomization = {
+    themeMode: dbSettings?.themeMode || DEFAULT_CUSTOMIZATION.themeMode,
+    themeColor: dbSettings?.themeColor || DEFAULT_CUSTOMIZATION.themeColor,
+    fontFamily: dbSettings?.fontFamily || DEFAULT_CUSTOMIZATION.fontFamily,
+    showAbout: dbSettings?.showAbout ?? DEFAULT_CUSTOMIZATION.showAbout,
+    showSkills: dbSettings?.showSkills ?? DEFAULT_CUSTOMIZATION.showSkills,
+    showProjects: dbSettings?.showProjects ?? DEFAULT_CUSTOMIZATION.showProjects,
+    showExperience: dbSettings?.showExperience ?? DEFAULT_CUSTOMIZATION.showExperience,
+    showEducation: dbSettings?.showEducation ?? DEFAULT_CUSTOMIZATION.showEducation,
+    showContact: dbSettings?.showContact ?? DEFAULT_CUSTOMIZATION.showContact,
+    showSocialLinks: dbSettings?.showSocialLinks ?? DEFAULT_CUSTOMIZATION.showSocialLinks,
+    buttonStyle: dbSettings?.buttonStyle || DEFAULT_CUSTOMIZATION.buttonStyle,
+    borderRadius: dbSettings?.borderRadius || DEFAULT_CUSTOMIZATION.borderRadius,
+  };
 
   return (
     <PortfolioRenderer
       portfolioData={portfolioData}
       template={selectedTemplate}
+      customization={customization}
     />
   );
 }

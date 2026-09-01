@@ -1,3 +1,23 @@
+export type ThemeModeValue = "LIGHT" | "DARK" | "SYSTEM";
+export type FontFamilyValue = "INTER" | "PLUS_JAKARTA_SANS" | "DM_SANS" | "MANROPE";
+export type ButtonStyleValue = "ROUNDED" | "PILL" | "SQUARE";
+export type BorderRadiusValue = "SMALL" | "MEDIUM" | "LARGE";
+
+export interface PortfolioCustomization {
+  themeMode: ThemeModeValue;
+  themeColor: string;
+  fontFamily: FontFamilyValue;
+  showAbout: boolean;
+  showSkills: boolean;
+  showProjects: boolean;
+  showExperience: boolean;
+  showEducation: boolean;
+  showContact: boolean;
+  showSocialLinks: boolean;
+  buttonStyle: ButtonStyleValue;
+  borderRadius: BorderRadiusValue;
+}
+
 export interface PortfolioProfile {
   fullName: string | null;
   headline: string | null;

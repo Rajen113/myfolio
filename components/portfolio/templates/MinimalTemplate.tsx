@@ -9,7 +9,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { GithubIcon, LinkedinIcon, TwitterIcon } from "@/components/SocialIcons";
-import { PortfolioData } from "@/types/portfolio";
+import { PortfolioData, PortfolioCustomization } from "@/types/portfolio";
 import {
   EMPLOYMENT_TYPE_LABELS,
   EmploymentTypeEnum,
@@ -20,21 +20,36 @@ import {
   getDegreeLabel,
   getFieldOfStudyLabel,
 } from "@/lib/constants/education-options";
+import {
+  DEFAULT_CUSTOMIZATION,
+  getButtonStyleClass,
+  getBorderRadiusClass,
+} from "@/lib/constants/portfolio-customization";
 
 interface MinimalTemplateProps {
   portfolioData: PortfolioData;
+  customization?: PortfolioCustomization;
 }
 
-export default function MinimalTemplate({ portfolioData }: MinimalTemplateProps) {
+export default function MinimalTemplate({
+  portfolioData,
+  customization = DEFAULT_CUSTOMIZATION,
+}: MinimalTemplateProps) {
   const { profile, projects, skills, experience, education, username, name } = portfolioData;
 
   const displayName = profile?.fullName || name || username;
 
-  const hasProjects = projects.length > 0;
-  const hasExperience = experience.length > 0;
-  const hasEducation = education.length > 0;
-  const hasSkills = skills.length > 0;
-  const hasContact = Boolean(
+  const buttonClass = getButtonStyleClass(customization.buttonStyle);
+  const cardRadiusClass = getBorderRadiusClass(customization.borderRadius);
+  const primaryColor = customization.themeColor;
+  const isLight = customization.themeMode === "LIGHT";
+
+  const hasAbout = customization.showAbout;
+  const hasProjects = customization.showProjects && projects.length > 0;
+  const hasExperience = customization.showExperience && experience.length > 0;
+  const hasEducation = customization.showEducation && education.length > 0;
+  const hasSkills = customization.showSkills && skills.length > 0;
+  const hasContact = customization.showContact && Boolean(
     profile?.website ||
       profile?.github ||
       profile?.linkedin ||
@@ -42,114 +57,132 @@ export default function MinimalTemplate({ portfolioData }: MinimalTemplateProps)
       (profile?.showEmail && profile?.email) ||
       (profile?.showPhone && profile?.phone)
   );
+  const hasSocial = customization.showSocialLinks;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-slate-700 selection:text-white font-sans">
-      {/* Top minimal header */}
-      <header className="border-b border-slate-900 bg-slate-950/90 backdrop-blur-md sticky top-0 z-30">
+    <div
+      className={`min-h-screen font-sans ${
+        isLight ? "bg-slate-50 text-slate-900" : "bg-slate-950 text-slate-200"
+      }`}
+    >
+      {/* Minimal Header */}
+      <header
+        className={`border-b sticky top-0 z-30 backdrop-blur-md ${
+          isLight
+            ? "bg-white/90 border-slate-200"
+            : "bg-slate-950/90 border-slate-900"
+        }`}
+      >
         <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link
             href={`/${username}`}
-            className="text-sm font-semibold tracking-tight text-white hover:text-slate-300 transition-colors"
+            className="text-sm font-semibold tracking-tight hover:opacity-80 transition-opacity"
           >
             {displayName}
           </Link>
 
-          <nav className="flex items-center gap-6 text-xs text-slate-400 font-medium">
-            {hasProjects && <a href="#projects" className="hover:text-white transition-colors">Projects</a>}
-            {hasExperience && <a href="#experience" className="hover:text-white transition-colors">Experience</a>}
-            {hasEducation && <a href="#education" className="hover:text-white transition-colors">Education</a>}
-            {hasSkills && <a href="#skills" className="hover:text-white transition-colors">Skills</a>}
-            {hasContact && <a href="#contact" className="hover:text-white transition-colors">Contact</a>}
+          <nav className="flex items-center gap-6 text-xs font-medium opacity-70">
+            {hasProjects && <a href="#projects" className="hover:opacity-100 transition-opacity">Projects</a>}
+            {hasExperience && <a href="#experience" className="hover:opacity-100 transition-opacity">Experience</a>}
+            {hasEducation && <a href="#education" className="hover:opacity-100 transition-opacity">Education</a>}
+            {hasSkills && <a href="#skills" className="hover:opacity-100 transition-opacity">Skills</a>}
+            {hasContact && <a href="#contact" className="hover:opacity-100 transition-opacity">Contact</a>}
           </nav>
         </div>
       </header>
 
-      {/* Main content container */}
+      {/* Main Content */}
       <main className="max-w-3xl mx-auto px-6 py-16 sm:py-24 space-y-20">
-        {/* HEADER / ABOUT SECTION */}
-        <section className="space-y-6">
-          <div className="space-y-2">
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              {displayName}
-            </h1>
+        {/* ABOUT SECTION */}
+        {hasAbout && (
+          <section className="space-y-6">
+            <div className="space-y-2">
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                {displayName}
+              </h1>
 
-            {profile?.headline && (
-              <p className="text-base sm:text-lg text-slate-400 font-medium">
-                {profile.headline}
+              {profile?.headline && (
+                <p
+                  className="text-base sm:text-lg font-medium"
+                  style={{ color: primaryColor }}
+                >
+                  {profile.headline}
+                </p>
+              )}
+
+              {profile?.location && (
+                <p className="text-xs opacity-60 flex items-center gap-1 font-mono pt-1">
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>{profile.location}</span>
+                </p>
+              )}
+            </div>
+
+            {profile?.bio && (
+              <p className="text-sm sm:text-base leading-relaxed font-normal pt-2 opacity-90">
+                {profile.bio}
               </p>
             )}
 
-            {profile?.location && (
-              <p className="text-xs text-slate-500 flex items-center gap-1 font-mono pt-1">
-                <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                <span>{profile.location}</span>
-              </p>
-            )}
-          </div>
+            {/* Social Links */}
+            {hasSocial && (
+              <div className={`flex flex-wrap items-center gap-4 text-xs font-mono pt-2 border-t ${isLight ? "border-slate-200" : "border-slate-900"}`}>
+                {profile?.website && (
+                  <a
+                    href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:opacity-100 opacity-70 transition-opacity inline-flex items-center gap-1"
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>Website</span>
+                  </a>
+                )}
 
-          {profile?.bio && (
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-normal pt-2">
-              {profile.bio}
-            </p>
-          )}
+                {profile?.github && (
+                  <a
+                    href={profile.github.startsWith("http") ? profile.github : `https://github.com/${profile.github}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:opacity-100 opacity-70 transition-opacity inline-flex items-center gap-1"
+                  >
+                    <GithubIcon className="w-3.5 h-3.5" />
+                    <span>GitHub</span>
+                  </a>
+                )}
 
-          {/* Social Links */}
-          <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-slate-400 pt-2 border-t border-slate-900">
-            {profile?.website && (
-              <a
-                href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-white transition-colors inline-flex items-center gap-1"
-              >
-                <Globe className="w-3.5 h-3.5" />
-                <span>Website</span>
-              </a>
-            )}
+                {profile?.linkedin && (
+                  <a
+                    href={profile.linkedin.startsWith("http") ? profile.linkedin : `https://linkedin.com/in/${profile.linkedin}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:opacity-100 opacity-70 transition-opacity inline-flex items-center gap-1"
+                  >
+                    <LinkedinIcon className="w-3.5 h-3.5" />
+                    <span>LinkedIn</span>
+                  </a>
+                )}
 
-            {profile?.github && (
-              <a
-                href={profile.github.startsWith("http") ? profile.github : `https://github.com/${profile.github}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-white transition-colors inline-flex items-center gap-1"
-              >
-                <GithubIcon className="w-3.5 h-3.5" />
-                <span>GitHub</span>
-              </a>
+                {profile?.twitter && (
+                  <a
+                    href={profile.twitter.startsWith("http") ? profile.twitter : `https://twitter.com/${profile.twitter}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:opacity-100 opacity-70 transition-opacity inline-flex items-center gap-1"
+                  >
+                    <TwitterIcon className="w-3.5 h-3.5" />
+                    <span>Twitter</span>
+                  </a>
+                )}
+              </div>
             )}
-
-            {profile?.linkedin && (
-              <a
-                href={profile.linkedin.startsWith("http") ? profile.linkedin : `https://linkedin.com/in/${profile.linkedin}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-white transition-colors inline-flex items-center gap-1"
-              >
-                <LinkedinIcon className="w-3.5 h-3.5" />
-                <span>LinkedIn</span>
-              </a>
-            )}
-
-            {profile?.twitter && (
-              <a
-                href={profile.twitter.startsWith("http") ? profile.twitter : `https://twitter.com/${profile.twitter}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-white transition-colors inline-flex items-center gap-1"
-              >
-                <TwitterIcon className="w-3.5 h-3.5" />
-                <span>Twitter</span>
-              </a>
-            )}
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* PROJECTS SECTION */}
         {hasProjects && (
-          <section id="projects" className="space-y-8 pt-8 border-t border-slate-900">
-            <h2 className="text-xs font-mono uppercase tracking-widest text-slate-400">
+          <section id="projects" className={`space-y-8 pt-8 border-t ${isLight ? "border-slate-200" : "border-slate-900"}`}>
+            <h2 className="text-xs font-mono uppercase tracking-widest opacity-60">
               Selected Projects
             </h2>
 
@@ -157,17 +190,17 @@ export default function MinimalTemplate({ portfolioData }: MinimalTemplateProps)
               {projects.map((project) => (
                 <div key={project.id} className="space-y-3 group">
                   <div className="flex items-baseline justify-between gap-4">
-                    <h3 className="text-base font-bold text-white group-hover:text-slate-300 transition-colors">
+                    <h3 className="text-base font-bold transition-colors">
                       {project.title}
                     </h3>
 
-                    <div className="flex items-center gap-3 text-xs font-mono text-slate-400 shrink-0">
+                    <div className="flex items-center gap-3 text-xs font-mono opacity-70 shrink-0">
                       {project.githubUrl && (
                         <a
                           href={project.githubUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="hover:text-white transition-colors inline-flex items-center gap-0.5"
+                          className="hover:opacity-100 transition-opacity inline-flex items-center gap-0.5"
                         >
                           <span>GitHub</span>
                           <ArrowUpRight className="w-3 h-3" />
@@ -178,7 +211,8 @@ export default function MinimalTemplate({ portfolioData }: MinimalTemplateProps)
                           href={project.liveUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-indigo-400 hover:text-indigo-300 transition-colors inline-flex items-center gap-0.5 font-semibold"
+                          className="font-semibold inline-flex items-center gap-0.5"
+                          style={{ color: primaryColor }}
                         >
                           <span>Live Demo</span>
                           <ArrowUpRight className="w-3 h-3" />
@@ -187,12 +221,12 @@ export default function MinimalTemplate({ portfolioData }: MinimalTemplateProps)
                     </div>
                   </div>
 
-                  <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-normal">
+                  <p className="text-xs sm:text-sm leading-relaxed font-normal opacity-80">
                     {project.description}
                   </p>
 
                   {project.technologies && project.technologies.length > 0 && (
-                    <div className="flex flex-wrap gap-2 text-[11px] font-mono text-slate-500 pt-1">
+                    <div className="flex flex-wrap gap-2 text-[11px] font-mono opacity-60 pt-1">
                       {project.technologies.map((tech, idx) => (
                         <span key={idx}>#{tech}</span>
                       ))}
@@ -206,8 +240,8 @@ export default function MinimalTemplate({ portfolioData }: MinimalTemplateProps)
 
         {/* EXPERIENCE SECTION */}
         {hasExperience && (
-          <section id="experience" className="space-y-8 pt-8 border-t border-slate-900">
-            <h2 className="text-xs font-mono uppercase tracking-widest text-slate-400">
+          <section id="experience" className={`space-y-8 pt-8 border-t ${isLight ? "border-slate-200" : "border-slate-900"}`}>
+            <h2 className="text-xs font-mono uppercase tracking-widest opacity-60">
               Work Experience
             </h2>
 
@@ -226,21 +260,21 @@ export default function MinimalTemplate({ portfolioData }: MinimalTemplateProps)
                   <div key={exp.id} className="space-y-2">
                     <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
                       <div>
-                        <h3 className="text-base font-bold text-white">
+                        <h3 className="text-base font-bold">
                           {exp.position}
                         </h3>
-                        <p className="text-xs font-semibold text-slate-400">
+                        <p className="text-xs font-semibold opacity-70">
                           {exp.company} {exp.location ? `· ${exp.location}` : ""} ({empLabel})
                         </p>
                       </div>
 
-                      <span className="text-xs font-mono text-slate-500 shrink-0">
+                      <span className="text-xs font-mono opacity-60 shrink-0">
                         {dateRange}
                       </span>
                     </div>
 
                     {exp.description && (
-                      <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-normal pt-1 whitespace-pre-line">
+                      <p className="text-xs sm:text-sm leading-relaxed font-normal pt-1 opacity-80 whitespace-pre-line">
                         {exp.description}
                       </p>
                     )}
@@ -253,8 +287,8 @@ export default function MinimalTemplate({ portfolioData }: MinimalTemplateProps)
 
         {/* EDUCATION SECTION */}
         {hasEducation && (
-          <section id="education" className="space-y-8 pt-8 border-t border-slate-900">
-            <h2 className="text-xs font-mono uppercase tracking-widest text-slate-400">
+          <section id="education" className={`space-y-8 pt-8 border-t ${isLight ? "border-slate-200" : "border-slate-900"}`}>
+            <h2 className="text-xs font-mono uppercase tracking-widest opacity-60">
               Education
             </h2>
 
@@ -272,23 +306,23 @@ export default function MinimalTemplate({ portfolioData }: MinimalTemplateProps)
                   <div key={edu.id} className="space-y-2">
                     <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
                       <div>
-                        <h3 className="text-base font-bold text-white">
+                        <h3 className="text-base font-bold">
                           {degreeLabel}
                           {fieldLabel ? ` in ${fieldLabel}` : ""}
                         </h3>
-                        <p className="text-xs font-semibold text-slate-400">
+                        <p className="text-xs font-semibold opacity-70">
                           {edu.institution} {edu.location ? `· ${edu.location}` : ""}{" "}
                           {edu.grade ? `(Grade: ${edu.grade})` : ""}
                         </p>
                       </div>
 
-                      <span className="text-xs font-mono text-slate-500 shrink-0">
+                      <span className="text-xs font-mono opacity-60 shrink-0">
                         {dateRange}
                       </span>
                     </div>
 
                     {edu.description && (
-                      <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-normal pt-1 whitespace-pre-line">
+                      <p className="text-xs sm:text-sm leading-relaxed font-normal pt-1 opacity-80 whitespace-pre-line">
                         {edu.description}
                       </p>
                     )}
@@ -301,8 +335,8 @@ export default function MinimalTemplate({ portfolioData }: MinimalTemplateProps)
 
         {/* SKILLS SECTION */}
         {hasSkills && (
-          <section id="skills" className="space-y-6 pt-8 border-t border-slate-900">
-            <h2 className="text-xs font-mono uppercase tracking-widest text-slate-400">
+          <section id="skills" className={`space-y-6 pt-8 border-t ${isLight ? "border-slate-200" : "border-slate-900"}`}>
+            <h2 className="text-xs font-mono uppercase tracking-widest opacity-60">
               Skills & Tools
             </h2>
 
@@ -310,7 +344,11 @@ export default function MinimalTemplate({ portfolioData }: MinimalTemplateProps)
               {skills.map((skill) => (
                 <span
                   key={skill.id}
-                  className="px-3 py-1 rounded-md bg-slate-900 border border-slate-800 text-xs font-mono text-slate-300"
+                  className={`px-3 py-1 ${cardRadiusClass} ${buttonClass} border text-xs font-mono ${
+                    isLight
+                      ? "bg-white border-slate-200 text-slate-800"
+                      : "bg-slate-900 border-slate-800 text-slate-300"
+                  }`}
                 >
                   {skill.name}
                 </span>
@@ -321,16 +359,20 @@ export default function MinimalTemplate({ portfolioData }: MinimalTemplateProps)
 
         {/* CONTACT SECTION */}
         {hasContact && (
-          <section id="contact" className="space-y-6 pt-8 border-t border-slate-900">
-            <h2 className="text-xs font-mono uppercase tracking-widest text-slate-400">
+          <section id="contact" className={`space-y-6 pt-8 border-t ${isLight ? "border-slate-200" : "border-slate-900"}`}>
+            <h2 className="text-xs font-mono uppercase tracking-widest opacity-60">
               Contact
             </h2>
 
-            <div className="space-y-3 text-xs font-mono text-slate-300">
+            <div className="space-y-3 text-xs font-mono">
               {profile?.showEmail && profile?.email && (
                 <p className="flex items-center gap-2">
-                  <Mail className="w-3.5 h-3.5 text-slate-500" />
-                  <a href={`mailto:${profile.email}`} className="hover:text-white transition-colors">
+                  <Mail className="w-3.5 h-3.5 opacity-60" />
+                  <a
+                    href={`mailto:${profile.email}`}
+                    className="hover:underline"
+                    style={{ color: primaryColor }}
+                  >
                     {profile.email}
                   </a>
                 </p>
@@ -338,8 +380,8 @@ export default function MinimalTemplate({ portfolioData }: MinimalTemplateProps)
 
               {profile?.showPhone && profile?.phone && (
                 <p className="flex items-center gap-2">
-                  <Phone className="w-3.5 h-3.5 text-slate-500" />
-                  <a href={`tel:${profile.phone}`} className="hover:text-white transition-colors">
+                  <Phone className="w-3.5 h-3.5 opacity-60" />
+                  <a href={`tel:${profile.phone}`} className="hover:underline">
                     {profile.phone}
                   </a>
                 </p>
@@ -350,10 +392,14 @@ export default function MinimalTemplate({ portfolioData }: MinimalTemplateProps)
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 py-10 text-center text-xs font-mono text-slate-400">
+      <footer className={`border-t py-10 text-center text-xs font-mono opacity-60 ${isLight ? "border-slate-200" : "border-slate-900"}`}>
         <p>
           © {new Date().getFullYear()} {displayName} · Built with{" "}
-          <Link href="/" className="text-slate-300 hover:text-white underline underline-offset-4">
+          <Link
+            href="/"
+            className="underline underline-offset-4"
+            style={{ color: primaryColor }}
+          >
             MyFolio
           </Link>
         </p>

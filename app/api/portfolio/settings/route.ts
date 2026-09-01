@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { portfolioSettingsSchema } from "@/lib/validations/portfolio-settings";
+import { DEFAULT_CUSTOMIZATION } from "@/lib/constants/portfolio-customization";
 
 export async function GET() {
   try {
@@ -26,6 +27,7 @@ export async function GET() {
         data: {
           userId,
           template: "MODERN",
+          ...DEFAULT_CUSTOMIZATION,
         },
       });
     }
@@ -64,26 +66,37 @@ export async function PATCH(req: Request) {
       );
     }
 
-    const { template } = validation.data;
+    const dataToUpdate = validation.data;
 
     const updatedSettings = await prisma.portfolioSettings.upsert({
       where: { userId },
-      update: { template },
+      update: dataToUpdate,
       create: {
         userId,
-        template,
+        template: dataToUpdate.template || "MODERN",
+        themeMode: dataToUpdate.themeMode || DEFAULT_CUSTOMIZATION.themeMode,
+        themeColor: dataToUpdate.themeColor || DEFAULT_CUSTOMIZATION.themeColor,
+        fontFamily: dataToUpdate.fontFamily || DEFAULT_CUSTOMIZATION.fontFamily,
+        showAbout: dataToUpdate.showAbout ?? DEFAULT_CUSTOMIZATION.showAbout,
+        showSkills: dataToUpdate.showSkills ?? DEFAULT_CUSTOMIZATION.showSkills,
+        showProjects: dataToUpdate.showProjects ?? DEFAULT_CUSTOMIZATION.showProjects,
+        showExperience: dataToUpdate.showExperience ?? DEFAULT_CUSTOMIZATION.showExperience,
+        showEducation: dataToUpdate.showEducation ?? DEFAULT_CUSTOMIZATION.showEducation,
+        showContact: dataToUpdate.showContact ?? DEFAULT_CUSTOMIZATION.showContact,
+        showSocialLinks: dataToUpdate.showSocialLinks ?? DEFAULT_CUSTOMIZATION.showSocialLinks,
+        buttonStyle: dataToUpdate.buttonStyle || DEFAULT_CUSTOMIZATION.buttonStyle,
+        borderRadius: dataToUpdate.borderRadius || DEFAULT_CUSTOMIZATION.borderRadius,
       },
     });
 
     return NextResponse.json({
-      message: "Portfolio template updated successfully.",
+      message: "Portfolio customization saved successfully.",
       settings: updatedSettings,
-      template: updatedSettings.template,
     });
   } catch (error) {
     console.error("PATCH /api/portfolio/settings error:", error);
     return NextResponse.json(
-      { error: "Failed to update portfolio template." },
+      { error: "Failed to update portfolio customization." },
       { status: 500 }
     );
   }

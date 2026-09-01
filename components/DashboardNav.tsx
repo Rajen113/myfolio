@@ -10,6 +10,7 @@ import {
   Briefcase,
   GraduationCap,
   LayoutTemplate,
+  Palette,
   Settings,
 } from "lucide-react";
 
@@ -64,6 +65,13 @@ export default function DashboardNav() {
       href: "/dashboard/templates",
       icon: LayoutTemplate,
       active: pathname.startsWith("/dashboard/templates"),
+      disabled: false,
+    },
+    {
+      label: "Customize",
+      href: "/dashboard/customize",
+      icon: Palette,
+      active: pathname.startsWith("/dashboard/customize"),
       disabled: false,
     },
     {
