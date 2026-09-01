@@ -22,6 +22,9 @@ export async function generateMetadata({
     select: {
       name: true,
       username: true,
+      portfolioSettings: {
+        select: { isPublished: true },
+      },
       profile: {
         select: {
           fullName: true,
@@ -32,9 +35,9 @@ export async function generateMetadata({
     },
   });
 
-  if (!user) {
+  if (!user || !user.portfolioSettings?.isPublished) {
     return {
-      title: "User Not Found — MyFolio",
+      title: "Page Not Found — MyFolio",
     };
   }
 
@@ -153,8 +156,8 @@ export default async function PublicPortfolioPage({
     },
   });
 
-  // If user does not exist in database, render 404
-  if (!user) {
+  // If user does not exist or portfolio is not published, return 404 (do not leak private drafts)
+  if (!user || !user.portfolioSettings || !user.portfolioSettings.isPublished) {
     notFound();
   }
 
