@@ -18,4 +18,25 @@ model User {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  profile   Profile?
+}
+
+model Profile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName     String
+  headline     String?
+  bio          String?
+  profileImage String?
+  location     String?
+  website      String?
+  github       String?
+  linkedin     String?
+  email        String?
+  phone        String?
+  showEmail    Boolean  @default(false)
+  showPhone    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
