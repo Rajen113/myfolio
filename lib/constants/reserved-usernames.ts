@@ -1,29 +1,7 @@
-export const RESERVED_USERNAMES: readonly string[] = [
-  "admin",
-  "api",
-  "login",
-  "signup",
-  "dashboard",
-  "settings",
-  "profile",
-  "username",
-  "about",
-  "contact",
-  "help",
-  "support",
-  "terms",
-  "privacy",
-  "favicon",
-  "robots",
-  "sitemap",
-  "index",
-  "home",
-  "auth",
-  "myfolio",
-];
+import { RESERVED_SUBDOMAINS, isReservedSubdomain } from "./reserved-subdomains";
+
+export const RESERVED_USERNAMES: readonly string[] = RESERVED_SUBDOMAINS;
 
 export function isReservedUsername(username: string): boolean {
-  if (!username) return false;
-  const normalized = username.toLowerCase().trim();
-  return RESERVED_USERNAMES.includes(normalized);
+  return isReservedSubdomain(username);
 }

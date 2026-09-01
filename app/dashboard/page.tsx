@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import LogoutButton from "@/components/LogoutButton";
 import PublishingStatus from "@/components/portfolio/PublishingStatus";
+import { getPortfolioUrl } from "@/lib/utils/portfolio-url";
 import {
   LayoutDashboard,
   ExternalLink,
@@ -102,14 +103,15 @@ export default async function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link
-            href={`/${userUsername}`}
+          <a
+            href={getPortfolioUrl(userUsername)}
             target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-md shadow-indigo-500/20 transition-all active:scale-[0.98]"
           >
             <span>View Portfolio</span>
             <ExternalLink className="w-4 h-4" />
-          </Link>
+          </a>
 
           <LogoutButton variant="outline" />
         </div>

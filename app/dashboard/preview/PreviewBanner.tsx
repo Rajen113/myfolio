@@ -10,6 +10,8 @@ import {
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
+import { getPortfolioUrl } from "@/lib/utils/portfolio-url";
+import { getRootDomain } from "@/lib/utils/subdomain";
 
 interface PreviewBannerProps {
   isPublished: boolean;
@@ -26,6 +28,10 @@ export default function PreviewBanner({
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+
+  const liveUrl = username ? getPortfolioUrl(username) : "";
+  const rootDomain = getRootDomain();
+  const displaySubdomain = username ? `${username}.${rootDomain}` : "";
 
   const handlePublish = async () => {
     setIsPublishing(true);
@@ -118,15 +124,17 @@ export default function PreviewBanner({
                 <span>Publish Portfolio</span>
               </button>
             ) : (
-              username && (
-                <Link
-                  href={`/${username}`}
+              liveUrl && (
+                <a
+                  href={liveUrl}
                   target="_blank"
+                  rel="noopener noreferrer"
+                  suppressHydrationWarning
                   className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-600/30 font-semibold transition-colors"
                 >
                   <Globe className="w-3.5 h-3.5" />
                   <span>View Live Site</span>
-                </Link>
+                </a>
               )
             )}
           </div>
@@ -146,7 +154,7 @@ export default function PreviewBanner({
                 Your portfolio will become publicly visible at:
               </p>
               <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-indigo-400 font-bold text-center">
-                myfolio.com/{username}
+                {displaySubdomain}
               </div>
               <p className="text-xs text-slate-400 leading-relaxed pt-1">
                 Anyone with this URL will be able to view your public portfolio website.
