@@ -36,8 +36,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return {
             id: user.id,
             email: user.email,
-            name: user.name || user.username,
-            username: user.username,
+            name: user.name || user.username || undefined,
+            username: user.username || undefined,
           };
         } catch (error) {
           console.error("Auth authorize error:", error);
@@ -47,10 +47,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.username = (user as { username?: string }).username;
+      }
+      if (trigger === "update" && session?.username) {
+        token.username = session.username;
       }
       return token;
     },

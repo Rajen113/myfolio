@@ -6,8 +6,8 @@ export async function middleware(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.AUTH_SECRET });
   const { pathname } = req.nextUrl;
 
-  // Protect /dashboard
-  if (pathname.startsWith("/dashboard")) {
+  // Protect /dashboard and /username
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/username")) {
     if (!token) {
       const loginUrl = new URL("/login", req.url);
       return NextResponse.redirect(loginUrl);
@@ -24,5 +24,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/signup"],
+  matcher: ["/dashboard/:path*", "/username", "/login", "/signup"],
 };
