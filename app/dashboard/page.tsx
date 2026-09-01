@@ -5,12 +5,16 @@ import { prisma } from "@/lib/prisma";
 import LogoutButton from "@/components/LogoutButton";
 import {
   LayoutDashboard,
-  Mail,
-  AtSign,
   ExternalLink,
   Edit3,
   ShieldCheck,
   Globe,
+  User as UserIcon,
+  MapPin,
+  Briefcase,
+  CheckCircle2,
+  Circle,
+  PlusCircle,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -20,30 +24,43 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // Fetch current user from PostgreSQL database
+  // Fetch user and profile from PostgreSQL
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      username: true,
-      createdAt: true,
+    include: {
+      profile: true,
     },
   });
 
-  // If logged-in user does not have a username set, redirect to /username setup
   if (!user || !user.username) {
     redirect("/username");
   }
 
-  const displayName = user.name || user.username;
-  const userEmail = user.email;
+  const profile = user.profile;
+  const displayName = profile?.fullName || user.name || user.username;
   const userUsername = user.username;
+
+  // Calculate dynamic profile completion percentage
+  const completionItems = [
+    { label: "Name", completed: Boolean(profile?.fullName) },
+    { label: "Headline", completed: Boolean(profile?.headline) },
+    { label: "Bio", completed: Boolean(profile?.bio) },
+    { label: "Location", completed: Boolean(profile?.location) },
+    { label: "Profile photo", completed: Boolean(profile?.profileImage) },
+    {
+      label: "Website / Links",
+      completed: Boolean(profile?.website || profile?.github || profile?.linkedin),
+    },
+  ];
+
+  const completedCount = completionItems.filter((item) => item.completed).length;
+  const completionPercentage = Math.round(
+    (completedCount / completionItems.length) * 100
+  );
 
   return (
     <div className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
-      {/* Dashboard Top Header */}
+      {/* Dashboard Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-indigo-400 text-sm font-semibold">
@@ -54,7 +71,7 @@ export default async function DashboardPage() {
             Welcome, {displayName}
           </h1>
           <p className="text-sm text-slate-400">
-            Manage your public portfolio URL and account configuration.
+            Manage your public portfolio URL, professional profile, and settings.
           </p>
         </div>
 
@@ -72,74 +89,186 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Main Public Portfolio & Username Card */}
-      <div className="glass-card p-6 sm:p-8 rounded-2xl border border-slate-800 space-y-6 shadow-xl relative overflow-hidden">
-        <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Globe className="w-5 h-5 text-indigo-400" />
-            <span>Your Public Portfolio</span>
+      {/* Main Grid: Profile Summary & Completion Tracker */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Profile Summary Box (2 columns) */}
+        <div className="md:col-span-2 glass-card p-6 sm:p-8 rounded-2xl border border-slate-800 space-y-6 shadow-xl flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <UserIcon className="w-5 h-5 text-indigo-400" />
+                <span>Professional Profile Summary</span>
+              </h2>
+              {profile ? (
+                <Link
+                  href="/dashboard/profile"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-950/80 border border-indigo-500/30 text-indigo-300 hover:text-white text-xs font-semibold transition-colors"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>Edit Profile</span>
+                </Link>
+              ) : null}
+            </div>
+
+            {profile ? (
+              <div className="space-y-3">
+                <div>
+                  <h3 className="text-2xl font-bold text-white tracking-tight">
+                    {profile.fullName}
+                  </h3>
+                  {profile.headline ? (
+                    <p className="text-sm font-medium text-indigo-300 flex items-center gap-1.5 mt-0.5">
+                      <Briefcase className="w-4 h-4 text-slate-500" />
+                      <span>{profile.headline}</span>
+                    </p>
+                  ) : null}
+                </div>
+
+                {profile.bio ? (
+                  <p className="text-xs sm:text-sm text-slate-300 line-clamp-3 leading-relaxed">
+                    {profile.bio}
+                  </p>
+                ) : null}
+
+                {profile.location ? (
+                  <p className="text-xs text-slate-400 flex items-center gap-1.5 pt-1">
+                    <MapPin className="w-3.5 h-3.5 text-rose-400" />
+                    <span>{profile.location}</span>
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <div className="p-6 rounded-xl bg-slate-900/60 border border-slate-800/80 text-center space-y-4">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
+                  <PlusCircle className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-base font-bold text-white">
+                    Create your profile
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                    Add your professional information to start building your portfolio.
+                  </p>
+                </div>
+                <Link
+                  href="/dashboard/profile"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-sm shadow-md shadow-indigo-500/20 transition-all"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span>Create Profile</span>
+                </Link>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+            <span>Portfolio Handle: <code className="text-indigo-300 font-mono">/{userUsername}</code></span>
+            {profile ? (
+              <Link
+                href="/dashboard/profile"
+                className="text-indigo-400 hover:text-indigo-300 font-medium"
+              >
+                Edit Profile →
+              </Link>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Profile Completion Card (1 column) */}
+        <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-5 flex flex-col justify-between shadow-xl">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+              <h3 className="text-sm font-semibold text-white">
+                Profile completion
+              </h3>
+              <span className="text-sm font-bold text-indigo-400 font-mono">
+                {completionPercentage}%
+              </span>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full h-2.5 rounded-full bg-slate-900 overflow-hidden border border-slate-800">
+              <div
+                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 rounded-full"
+                style={{ width: `${completionPercentage}%` }}
+              />
+            </div>
+
+            {/* Completion Checklist */}
+            <div className="space-y-2.5 pt-2">
+              {completionItems.map((item, idx) => (
+                <div key={idx} className="flex items-center gap-2 text-xs">
+                  {item.completed ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  ) : (
+                    <Circle className="w-4 h-4 text-slate-600 shrink-0" />
+                  )}
+                  <span
+                    className={
+                      item.completed
+                        ? "text-slate-200 font-medium"
+                        : "text-slate-500"
+                    }
+                  >
+                    {item.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <Link
+              href="/dashboard/profile"
+              className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+            >
+              <span>{profile ? "Update Profile" : "Complete Profile"}</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Account Details & Public Link Card */}
+      <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <h2 className="text-base font-semibold text-white flex items-center gap-2">
+            <Globe className="w-4 h-4 text-indigo-400" />
+            <span>Public Portfolio URL</span>
           </h2>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Live & Active</span>
+            <span>Live</span>
           </span>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-950/90 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
-              Public Portfolio URL
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-950/90 border border-slate-800">
+          <div className="space-y-0.5">
+            <p className="text-xs text-slate-400 font-semibold uppercase">
+              Public Handle
             </p>
-            <p className="font-mono text-base sm:text-lg text-indigo-300 font-semibold">
+            <p className="font-mono text-base text-indigo-300 font-semibold">
               myfolio.com/{userUsername}
             </p>
           </div>
 
-          <Link
-            href={`/${userUsername}`}
-            target="_blank"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-indigo-950 border border-slate-700 hover:border-indigo-500/50 text-indigo-300 text-sm font-medium transition-all self-start sm:self-auto"
-          >
-            <span>View Portfolio</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </Link>
-        </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/username"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs font-medium text-slate-300 hover:text-white transition-colors"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Change Handle</span>
+            </Link>
 
-        {/* Username Configuration Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-          <div className="space-y-1.5 p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <AtSign className="w-3.5 h-3.5 text-purple-400" />
-              <span>Username</span>
-            </label>
-            <div className="flex items-center justify-between">
-              <p className="text-base font-mono font-semibold text-purple-300">
-                {userUsername}
-              </p>
-              <Link
-                href="/username"
-                className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>Change Username</span>
-              </Link>
-            </div>
+            <Link
+              href={`/${userUsername}`}
+              target="_blank"
+              className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors"
+            >
+              <span>View Portfolio</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </Link>
           </div>
-
-          <div className="space-y-1.5 p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <Mail className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Email</span>
-            </label>
-            <p className="text-base font-medium text-white break-all">
-              {userEmail}
-            </p>
-          </div>
-        </div>
-
-        <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
-          <span className="text-xs text-slate-500">Account ID: {user.id}</span>
-          <LogoutButton variant="text" />
         </div>
       </div>
     </div>
