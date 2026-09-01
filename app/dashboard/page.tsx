@@ -49,6 +49,7 @@ export default async function DashboardPage() {
         select: { id: true, degree: true, customDegree: true, institution: true, current: true },
         orderBy: [{ current: "desc" }, { displayOrder: "asc" }, { startDate: "desc" }],
       },
+      portfolioSettings: true,
     },
   });
 
