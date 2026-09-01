@@ -9,6 +9,7 @@ import {
   Wrench,
   Briefcase,
   GraduationCap,
+  LayoutTemplate,
   Settings,
 } from "lucide-react";
 
@@ -56,6 +57,13 @@ export default function DashboardNav() {
       href: "/dashboard/education",
       icon: GraduationCap,
       active: pathname.startsWith("/dashboard/education"),
+      disabled: false,
+    },
+    {
+      label: "Templates",
+      href: "/dashboard/templates",
+      icon: LayoutTemplate,
+      active: pathname.startsWith("/dashboard/templates"),
       disabled: false,
     },
     {

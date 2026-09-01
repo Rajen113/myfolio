@@ -22,7 +22,25 @@ model User {
   projects   Project[]
   skills     Skill[]
   experience Experience[]
-  education  Education[]
+  education         Education[]
+  portfolioSettings PortfolioSettings?
+}
+
+enum PortfolioTemplate {
+  MODERN
+  MINIMAL
+  PROFESSIONAL
+}
+
+model PortfolioSettings {
+  id        String            @id @default(cuid())
+  userId    String            @unique
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template  PortfolioTemplate @default(MODERN)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([userId])
 }
 
 model Profile {
