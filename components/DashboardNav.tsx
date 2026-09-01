@@ -53,10 +53,10 @@ export default function DashboardNav() {
     },
     {
       label: "Education",
-      href: "#",
+      href: "/dashboard/education",
       icon: GraduationCap,
-      active: false,
-      disabled: true,
+      active: pathname.startsWith("/dashboard/education"),
+      disabled: false,
     },
     {
       label: "Settings",

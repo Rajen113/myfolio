@@ -22,6 +22,7 @@ model User {
   projects   Project[]
   skills     Skill[]
   experience Experience[]
+  education  Education[]
 }
 
 model Profile {
@@ -110,6 +111,30 @@ model Experience {
   displayOrder   Int            @default(0)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([userId, displayOrder])
+  @@index([userId, current])
+}
+
+model Education {
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution        String
+  degree             String
+  fieldOfStudy       String?
+  customDegree       String?
+  customFieldOfStudy String?
+  location           String?
+  startDate          DateTime
+  endDate      DateTime?
+  current      Boolean   @default(false)
+  grade        String?
+  description  String?
+  displayOrder Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@index([userId])
   @@index([userId, displayOrder])

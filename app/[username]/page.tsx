@@ -15,6 +15,8 @@ import {
   FolderGit2,
   Star,
   Wrench,
+  GraduationCap,
+  Award,
 } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/SocialIcons";
 import {
@@ -22,6 +24,11 @@ import {
   EmploymentTypeEnum,
   formatExperienceDate,
 } from "@/lib/validations/experience";
+import { formatEducationDate } from "@/lib/validations/education";
+import {
+  getDegreeLabel,
+  getFieldOfStudyLabel,
+} from "@/lib/constants/education-options";
 
 interface PublicPortfolioPageProps {
   params: Promise<{
@@ -118,6 +125,28 @@ export default async function PublicPortfolioPage({
           { current: "desc" },
           { displayOrder: "asc" },
           { startDate: "desc" },
+        ],
+      },
+      education: {
+        select: {
+          id: true,
+          institution: true,
+          degree: true,
+          fieldOfStudy: true,
+          customDegree: true,
+          customFieldOfStudy: true,
+          location: true,
+          startDate: true,
+          endDate: true,
+          current: true,
+          grade: true,
+          description: true,
+        },
+        orderBy: [
+          { current: "desc" },
+          { displayOrder: "asc" },
+          { startDate: "desc" },
+          { createdAt: "desc" },
         ],
       },
     },
@@ -427,6 +456,92 @@ export default async function PublicPortfolioPage({
                       {exp.description && (
                         <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-1 whitespace-pre-line">
                           {exp.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Education Section - Timeline */}
+        {user.education && user.education.length > 0 && (
+          <div className="space-y-6 pt-6 border-t border-slate-800/80 text-left">
+            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center justify-center gap-2 mb-6">
+              <GraduationCap className="w-4 h-4 text-indigo-400" />
+              <span>Education</span>
+            </h2>
+
+            <div className="relative border-l-2 border-slate-800 ml-3 sm:ml-6 pl-6 sm:pl-8 space-y-8">
+              {user.education.map((edu) => {
+                const startStr = formatEducationDate(edu.startDate.toISOString());
+                const endStr = edu.current
+                  ? "Present"
+                  : formatEducationDate(edu.endDate ? edu.endDate.toISOString() : null);
+                const dateRange = `${startStr} — ${endStr}`;
+                const degreeLabel = getDegreeLabel(edu.degree, edu.customDegree);
+                const fieldLabel = getFieldOfStudyLabel(edu.fieldOfStudy, edu.customFieldOfStudy);
+
+                return (
+                  <div key={edu.id} className="relative group">
+                    {/* Timeline dot */}
+                    <div
+                      className={`absolute -left-[31px] sm:-left-[39px] top-1.5 w-4 h-4 rounded-full border-2 ${
+                        edu.current
+                          ? "bg-purple-500 border-purple-400 shadow-md shadow-purple-500/50 animate-pulse"
+                          : "bg-slate-900 border-indigo-500"
+                      }`}
+                    />
+
+                    <div className="p-5 rounded-2xl glass-card border border-slate-800 space-y-3 shadow-lg hover:border-slate-700/80 transition-all">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 border-b border-slate-800/60 pb-3">
+                        <div>
+                          <h3 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                            <span>{degreeLabel}</span>
+                          </h3>
+                          {fieldLabel && (
+                            <p className="text-xs font-semibold text-purple-300 mt-0.5">
+                              {fieldLabel}
+                            </p>
+                          )}
+                          <p className="text-sm font-semibold text-slate-300 flex items-center gap-1.5 mt-1">
+                            <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span>{edu.institution}</span>
+                          </p>
+                        </div>
+
+                        <div className="text-xs font-mono text-slate-300 bg-slate-900/90 px-3 py-1 rounded-lg border border-slate-800 shrink-0 self-start sm:self-auto font-medium">
+                          {dateRange}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-3 text-xs">
+                        {edu.current && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold">
+                            Currently Studying
+                          </span>
+                        )}
+
+                        {edu.location && (
+                          <span className="text-slate-400 flex items-center gap-1 font-medium">
+                            <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                            <span>{edu.location}</span>
+                          </span>
+                        )}
+
+                        {edu.grade && (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-semibold">
+                            <Award className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                            <span>Grade: {edu.grade}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {edu.description && (
+                        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-1 whitespace-pre-line">
+                          {edu.description}
                         </p>
                       )}
                     </div>
