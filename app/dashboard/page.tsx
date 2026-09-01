@@ -17,6 +17,7 @@ import {
   PlusCircle,
   FolderGit2,
   Star,
+  Wrench,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -34,10 +35,18 @@ export default async function DashboardPage() {
       projects: {
         select: { id: true, featured: true },
       },
+      skills: {
+        select: { id: true, name: true, proficiency: true },
+        orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
+      },
     },
   });
 
-  if (!user || !user.username) {
+  if (!user) {
+    redirect("/login");
+  }
+
+  if (!user.username) {
     redirect("/username");
   }
 
@@ -47,14 +56,12 @@ export default async function DashboardPage() {
 
   // Calculate dynamic profile completion percentage
   const completionItems = [
-    { label: "Name", completed: Boolean(profile?.fullName) },
-    { label: "Headline", completed: Boolean(profile?.headline) },
-    { label: "Bio", completed: Boolean(profile?.bio) },
-    { label: "Location", completed: Boolean(profile?.location) },
-    { label: "Profile photo", completed: Boolean(profile?.profileImage) },
+    { label: "Profile details", completed: Boolean(profile?.fullName && profile?.headline) },
+    { label: "Projects added", completed: (user?.projects?.length || 0) > 0 },
+    { label: "Skills added", completed: (user?.skills?.length || 0) > 0 },
     {
-      label: "Website / Links",
-      completed: Boolean(profile?.website || profile?.github || profile?.linkedin),
+      label: "Contact & Links",
+      completed: Boolean(profile?.website || profile?.github || profile?.linkedin || profile?.email),
     },
   ];
 
@@ -273,6 +280,59 @@ export default async function DashboardPage() {
             >
               <PlusCircle className="w-3.5 h-3.5" />
               <span>Add Project</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Skills Summary Card */}
+      <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <h2 className="text-base font-semibold text-white flex items-center gap-2">
+            <Wrench className="w-4 h-4 text-indigo-400" />
+            <span>Skills Overview</span>
+          </h2>
+          <Link
+            href="/dashboard/skills"
+            className="text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+          >
+            Manage Skills →
+          </Link>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-950/90 border border-slate-800">
+          <div className="space-y-1">
+            <p className="text-2xl font-bold text-white tracking-tight">
+              {user?.skills?.length || 0} skills added
+            </p>
+            {user?.skills && user.skills.length > 0 ? (
+              <div className="flex items-center gap-2 text-xs text-slate-300">
+                <span className="text-slate-400 font-medium">Top skills:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {user.skills.slice(0, 4).map((skill) => (
+                    <span
+                      key={skill.id}
+                      className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700/80 text-indigo-300 font-medium"
+                    >
+                      {skill.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400">
+                Add technical and professional skills to highlight your expertise.
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard/skills"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs transition-all shadow-md shadow-indigo-500/20"
+            >
+              <Wrench className="w-3.5 h-3.5" />
+              <span>Manage Skills</span>
             </Link>
           </div>
         </div>

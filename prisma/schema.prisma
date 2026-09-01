@@ -20,6 +20,7 @@ model User {
   updatedAt DateTime @updatedAt
   profile   Profile?
   projects  Project[]
+  skills    Skill[]
 }
 
 model Profile {
@@ -56,6 +57,28 @@ model Project {
   displayOrder Int      @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, displayOrder])
+}
+
+enum SkillProficiency {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+model Skill {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  category     String?
+  proficiency  SkillProficiency
+  displayOrder Int              @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   @@index([userId])
   @@index([userId, displayOrder])

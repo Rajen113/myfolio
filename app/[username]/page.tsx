@@ -13,6 +13,7 @@ import {
   Briefcase,
   FolderGit2,
   Star,
+  Wrench,
 } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/SocialIcons";
 
@@ -79,6 +80,18 @@ export default async function PublicPortfolioPage({
         },
         orderBy: [
           { featured: "desc" },
+          { displayOrder: "asc" },
+          { createdAt: "desc" },
+        ],
+      },
+      skills: {
+        select: {
+          id: true,
+          name: true,
+          category: true,
+          proficiency: true,
+        },
+        orderBy: [
           { displayOrder: "asc" },
           { createdAt: "desc" },
         ],
@@ -252,6 +265,72 @@ export default async function PublicPortfolioPage({
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Skills Section */}
+        {user.skills && user.skills.length > 0 && (
+          <div className="space-y-6 pt-6 border-t border-slate-800/80 text-left">
+            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center justify-center gap-2 mb-4">
+              <Wrench className="w-4 h-4 text-indigo-400" />
+              <span>Skills & Expertise</span>
+            </h2>
+
+            {/* Categorized Skills rendering */}
+            {(() => {
+              // Group skills by category
+              const groupedSkills: Record<string, typeof user.skills> = {};
+              user.skills.forEach((s) => {
+                const cat = s.category && s.category.trim() ? s.category.trim() : "Technical Skills";
+                if (!groupedSkills[cat]) {
+                  groupedSkills[cat] = [];
+                }
+                groupedSkills[cat].push(s);
+              });
+
+              const profMap: Record<string, { label: string; width: string; color: string }> = {
+                BEGINNER: { label: "Beginner", width: "w-1/4", color: "bg-blue-400" },
+                INTERMEDIATE: { label: "Intermediate", width: "w-1/2", color: "bg-indigo-400" },
+                ADVANCED: { label: "Advanced", width: "w-3/4", color: "bg-purple-400" },
+                EXPERT: { label: "Expert", width: "w-full", color: "bg-gradient-to-r from-amber-400 to-emerald-400" },
+              };
+
+              return (
+                <div className="space-y-6">
+                  {Object.entries(groupedSkills).map(([categoryName, categorySkills]) => (
+                    <div key={categoryName} className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                          {categoryName}
+                        </h3>
+                        <div className="flex-1 h-px bg-slate-800" />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {categorySkills.map((skill) => {
+                          const info = profMap[skill.proficiency] || profMap.INTERMEDIATE;
+                          return (
+                            <div
+                              key={skill.id}
+                              className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2"
+                            >
+                              <div className="flex items-center justify-between text-xs font-medium">
+                                <span className="text-white font-semibold">{skill.name}</span>
+                                <span className="text-slate-400 text-[11px]">{info.label}</span>
+                              </div>
+
+                              <div className="w-full h-1.5 rounded-full bg-slate-950 overflow-hidden border border-slate-800">
+                                <div className={`h-full ${info.width} ${info.color} rounded-full transition-all`} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         )}
 

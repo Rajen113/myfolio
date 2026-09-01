@@ -68,6 +68,12 @@ export async function POST(req: Request) {
           { status: 400 }
         );
       }
+      if (error.code === "P2025") {
+        return NextResponse.json(
+          { error: "User session invalid or user no longer exists. Please log in again." },
+          { status: 401 }
+        );
+      }
     }
 
     console.error("Update username error:", error);
