@@ -32,13 +32,54 @@ enum PortfolioTemplate {
   PROFESSIONAL
 }
 
+enum ThemeMode {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+enum FontFamily {
+  INTER
+  PLUS_JAKARTA_SANS
+  DM_SANS
+  MANROPE
+}
+
+enum ButtonStyle {
+  ROUNDED
+  PILL
+  SQUARE
+}
+
+enum BorderRadius {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
 model PortfolioSettings {
-  id        String            @id @default(cuid())
-  userId    String            @unique
-  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  template  PortfolioTemplate @default(MODERN)
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  id              String            @id @default(cuid())
+  userId          String            @unique
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template        PortfolioTemplate @default(MODERN)
+
+  themeMode       ThemeMode         @default(SYSTEM)
+  themeColor      String            @default("#2563EB")
+  fontFamily      FontFamily        @default(INTER)
+
+  showAbout       Boolean           @default(true)
+  showSkills      Boolean           @default(true)
+  showProjects    Boolean           @default(true)
+  showExperience  Boolean           @default(true)
+  showEducation   Boolean           @default(true)
+  showContact     Boolean           @default(true)
+  showSocialLinks Boolean           @default(true)
+
+  buttonStyle     ButtonStyle       @default(ROUNDED)
+  borderRadius    BorderRadius      @default(MEDIUM)
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   @@index([userId])
 }
