@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validations/auth";
+import { isReservedUsername } from "@/lib/constants/reserved-usernames";
 
 export async function POST(req: Request) {
   try {
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
 
     const { name, email, username, password } = validationResult.data;
     const normalizedEmail = email.toLowerCase();
-    const normalizedUsername = username.toLowerCase();
+    const normalizedUsername = username ? username.toLowerCase().trim() : null;
 
     // Check existing email
     const existingEmail = await prisma.user.findUnique({
@@ -32,16 +33,25 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check existing username
-    const existingUsername = await prisma.user.findUnique({
-      where: { username: normalizedUsername },
-    });
+    // Check existing username if provided
+    if (normalizedUsername) {
+      if (isReservedUsername(normalizedUsername)) {
+        return NextResponse.json(
+          { error: "This username is reserved by the system" },
+          { status: 400 }
+        );
+      }
 
-    if (existingUsername) {
-      return NextResponse.json(
-        { error: "Username is already taken" },
-        { status: 400 }
-      );
+      const existingUsername = await prisma.user.findUnique({
+        where: { username: normalizedUsername },
+      });
+
+      if (existingUsername) {
+        return NextResponse.json(
+          { error: "Username is already taken" },
+          { status: 400 }
+        );
+      }
     }
 
     // Securely hash password
