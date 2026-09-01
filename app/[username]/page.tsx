@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import PortfolioRenderer from "@/components/portfolio/PortfolioRenderer";
 import { PortfolioData, PortfolioCustomization } from "@/types/portfolio";
 import { DEFAULT_CUSTOMIZATION } from "@/lib/constants/portfolio-customization";
-import { getPortfolioUrl } from "@/lib/utils/portfolio-url";
+import { getPrimaryPortfolioUrl } from "@/lib/utils/portfolio-url";
 
 interface PublicPortfolioPageProps {
   params: Promise<{
@@ -12,68 +12,23 @@ interface PublicPortfolioPageProps {
   }>;
 }
 
-export async function generateMetadata({
-  params,
-}: PublicPortfolioPageProps): Promise<Metadata> {
-  const { username } = await params;
-  const decodedUsername = decodeURIComponent(username);
+/**
+ * Helper to lookup user by either username or verified custom domain
+ */
+async function findUserForPortfolio(param: string) {
+  const cleanParam = decodeURIComponent(param).toLowerCase().trim();
 
-  const user = await prisma.user.findUnique({
-    where: { username: decodedUsername },
-    select: {
-      name: true,
-      username: true,
-      portfolioSettings: {
-        select: { isPublished: true },
-      },
-      profile: {
-        select: {
-          fullName: true,
-          headline: true,
-          bio: true,
-        },
-      },
-    },
-  });
-
-  if (!user || !user.portfolioSettings?.isPublished) {
-    return {
-      title: "Page Not Found — MyFolio",
-      robots: { index: false, follow: false },
-    };
-  }
-
-  const titleName = user.profile?.fullName || user.name || user.username || "User";
-  const titleHeadline = user.profile?.headline
-    ? ` — ${user.profile.headline}`
-    : " — Portfolio";
-
-  const canonicalUrl = getPortfolioUrl(user.username || decodedUsername);
-
-  return {
-    title: `${titleName}${titleHeadline} | MyFolio`,
-    description:
-      user.profile?.bio?.slice(0, 160) ||
-      `View ${titleName}'s professional portfolio, projects, skills, experience, and education on MyFolio.`,
-    alternates: {
-      canonical: canonicalUrl,
-    },
-  };
-}
-
-export default async function PublicPortfolioPage({
-  params,
-}: PublicPortfolioPageProps) {
-  const { username: rawUsername } = await params;
-  const username = decodeURIComponent(rawUsername);
-
-  // Query user by unique username with related profile, projects, skills, experience, education, portfolioSettings
-  const user = await prisma.user.findUnique({
-    where: { username },
+  // 1. Try finding user directly by unique username
+  const userByUsername = await prisma.user.findUnique({
+    where: { username: cleanParam },
     select: {
       id: true,
       name: true,
       username: true,
+      customDomains: {
+        where: { status: { in: ["VERIFIED", "ACTIVE"] } },
+        select: { domain: true, status: true, isPrimary: true },
+      },
       profile: {
         select: {
           fullName: true,
@@ -163,6 +118,166 @@ export default async function PublicPortfolioPage({
     },
   });
 
+  if (userByUsername) return userByUsername;
+
+  // 2. If not found by username, try finding by custom domain
+  const domainCandidates = [cleanParam];
+  if (cleanParam.startsWith("www.")) {
+    domainCandidates.push(cleanParam.replace(/^www\./, ""));
+  }
+
+  const customDomain = await prisma.customDomain.findFirst({
+    where: {
+      domain: { in: domainCandidates },
+      status: { in: ["VERIFIED", "ACTIVE"] },
+    },
+    select: {
+      userId: true,
+    },
+  });
+
+  if (!customDomain) return null;
+
+  return await prisma.user.findUnique({
+    where: { id: customDomain.userId },
+    select: {
+      id: true,
+      name: true,
+      username: true,
+      customDomains: {
+        where: { status: { in: ["VERIFIED", "ACTIVE"] } },
+        select: { domain: true, status: true, isPrimary: true },
+      },
+      profile: {
+        select: {
+          fullName: true,
+          headline: true,
+          bio: true,
+          profileImage: true,
+          location: true,
+          website: true,
+          github: true,
+          linkedin: true,
+          email: true,
+          phone: true,
+          showEmail: true,
+          showPhone: true,
+        },
+      },
+      portfolioSettings: true,
+      projects: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          image: true,
+          liveUrl: true,
+          githubUrl: true,
+          technologies: true,
+          featured: true,
+        },
+        orderBy: [
+          { featured: "desc" },
+          { displayOrder: "asc" },
+          { createdAt: "desc" },
+        ],
+      },
+      skills: {
+        select: {
+          id: true,
+          name: true,
+          category: true,
+          proficiency: true,
+        },
+        orderBy: [
+          { displayOrder: "asc" },
+          { createdAt: "desc" },
+        ],
+      },
+      experience: {
+        select: {
+          id: true,
+          company: true,
+          position: true,
+          employmentType: true,
+          location: true,
+          startDate: true,
+          endDate: true,
+          current: true,
+          description: true,
+        },
+        orderBy: [
+          { current: "desc" },
+          { displayOrder: "asc" },
+          { startDate: "desc" },
+        ],
+      },
+      education: {
+        select: {
+          id: true,
+          institution: true,
+          degree: true,
+          fieldOfStudy: true,
+          customDegree: true,
+          customFieldOfStudy: true,
+          location: true,
+          startDate: true,
+          endDate: true,
+          current: true,
+          grade: true,
+          description: true,
+        },
+        orderBy: [
+          { current: "desc" },
+          { displayOrder: "asc" },
+          { startDate: "desc" },
+          { createdAt: "desc" },
+        ],
+      },
+    },
+  });
+}
+
+export async function generateMetadata({
+  params,
+}: PublicPortfolioPageProps): Promise<Metadata> {
+  const { username } = await params;
+  const user = await findUserForPortfolio(username);
+
+  if (!user || !user.portfolioSettings?.isPublished) {
+    return {
+      title: "Page Not Found — MyFolio",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const titleName = user.profile?.fullName || user.name || user.username || "User";
+  const titleHeadline = user.profile?.headline
+    ? ` — ${user.profile.headline}`
+    : " — Portfolio";
+
+  const canonicalUrl = getPrimaryPortfolioUrl({
+    username: user.username,
+    customDomains: user.customDomains,
+  });
+
+  return {
+    title: `${titleName}${titleHeadline} | MyFolio`,
+    description:
+      user.profile?.bio?.slice(0, 160) ||
+      `View ${titleName}'s professional portfolio, projects, skills, experience, and education on MyFolio.`,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+  };
+}
+
+export default async function PublicPortfolioPage({
+  params,
+}: PublicPortfolioPageProps) {
+  const { username: rawUsername } = await params;
+  const user = await findUserForPortfolio(rawUsername);
+
   // If user does not exist or portfolio is not published, return 404 (do not leak private drafts)
   if (!user || !user.portfolioSettings || !user.portfolioSettings.isPublished) {
     notFound();
@@ -170,7 +285,7 @@ export default async function PublicPortfolioPage({
 
   // Transform Prisma records into clean PortfolioData DTO
   const portfolioData: PortfolioData = {
-    username: user.username || username,
+    username: user.username || rawUsername,
     name: user.name,
     profile: user.profile
       ? {

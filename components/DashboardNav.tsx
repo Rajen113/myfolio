@@ -11,6 +11,7 @@ import {
   GraduationCap,
   LayoutTemplate,
   Palette,
+  Globe,
   Settings,
 } from "lucide-react";
 
@@ -72,6 +73,13 @@ export default function DashboardNav() {
       href: "/dashboard/customize",
       icon: Palette,
       active: pathname.startsWith("/dashboard/customize"),
+      disabled: false,
+    },
+    {
+      label: "Domains",
+      href: "/dashboard/domains",
+      icon: Globe,
+      active: pathname.startsWith("/dashboard/domains"),
       disabled: false,
     },
     {
