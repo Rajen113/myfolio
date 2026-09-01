@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import PortfolioRenderer from "@/components/portfolio/PortfolioRenderer";
 import { PortfolioData, PortfolioCustomization } from "@/types/portfolio";
 import { DEFAULT_CUSTOMIZATION } from "@/lib/constants/portfolio-customization";
+import { getPortfolioUrl } from "@/lib/utils/portfolio-url";
 
 interface PublicPortfolioPageProps {
   params: Promise<{
@@ -38,6 +39,7 @@ export async function generateMetadata({
   if (!user || !user.portfolioSettings?.isPublished) {
     return {
       title: "Page Not Found — MyFolio",
+      robots: { index: false, follow: false },
     };
   }
 
@@ -46,11 +48,16 @@ export async function generateMetadata({
     ? ` — ${user.profile.headline}`
     : " — Portfolio";
 
+  const canonicalUrl = getPortfolioUrl(user.username || decodedUsername);
+
   return {
     title: `${titleName}${titleHeadline} | MyFolio`,
     description:
       user.profile?.bio?.slice(0, 160) ||
       `View ${titleName}'s professional portfolio, projects, skills, experience, and education on MyFolio.`,
+    alternates: {
+      canonical: canonicalUrl,
+    },
   };
 }
 

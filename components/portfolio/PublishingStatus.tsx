@@ -14,6 +14,8 @@ import {
   CheckCircle2,
   Lock,
 } from "lucide-react";
+import { getPortfolioUrl } from "@/lib/utils/portfolio-url";
+import { getRootDomain } from "@/lib/utils/subdomain";
 
 interface ReadinessItem {
   label: string;
@@ -42,20 +44,19 @@ export default function PublishingStatus({
   const [toastMessage, setToastMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const publicUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/${username}`
-    : `https://myfolio.com/${username}`;
-
-  const shortDisplayUrl = `myfolio.com/${username}`;
+  const primarySubdomainUrl = getPortfolioUrl(username);
+  const rootDomain = getRootDomain();
+  const shortSubdomainDisplay = `${username.toLowerCase()}.${rootDomain}`;
+  const shortPathDisplay = `${rootDomain}/${username.toLowerCase()}`;
 
   const handleCopy = async () => {
     try {
       if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(publicUrl);
+        await navigator.clipboard.writeText(primarySubdomainUrl);
       } else {
         // Fallback for non-HTTPS or legacy browsers
         const textArea = document.createElement("textarea");
-        textArea.value = publicUrl;
+        textArea.value = primarySubdomainUrl;
         document.body.appendChild(textArea);
         textArea.select();
         document.execCommand("copy");
@@ -137,7 +138,7 @@ export default function PublishingStatus({
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Portfolio Status
+              Your Portfolio
             </span>
           </div>
 
@@ -150,18 +151,23 @@ export default function PublishingStatus({
             ) : (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold">
                 <span className="w-2 h-2 rounded-full bg-amber-400" />
-                <span>Not Published (Draft)</span>
+                <span>Draft (Not Published)</span>
               </span>
             )}
           </div>
         </div>
 
-        {/* Dynamic Display URL or Privacy Note */}
+        {/* Dynamic Display URLs or Privacy Note */}
         <div className="text-xs font-mono">
           {isPublished ? (
-            <div className="flex items-center gap-2 bg-slate-950 px-3.5 py-2 rounded-xl border border-slate-800 text-indigo-400 font-semibold">
-              <Globe className="w-4 h-4 shrink-0 text-indigo-400" />
-              <span className="truncate max-w-[200px] sm:max-w-xs">{shortDisplayUrl}</span>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 bg-slate-950 px-3.5 py-1.5 rounded-xl border border-slate-800 text-indigo-400 font-semibold">
+                <Globe className="w-3.5 h-3.5 shrink-0 text-indigo-400" />
+                <span className="truncate max-w-[200px] sm:max-w-xs">{shortSubdomainDisplay}</span>
+              </div>
+              <div className="text-[11px] text-slate-500 text-right pr-1">
+                Also: {shortPathDisplay}
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-slate-400 bg-slate-950/60 px-3.5 py-2 rounded-xl border border-slate-800/80">
@@ -235,13 +241,14 @@ export default function PublishingStatus({
         ) : (
           <>
             <a
-              href={`/${username}`}
+              href={primarySubdomainUrl}
               target="_blank"
               rel="noopener noreferrer"
+              suppressHydrationWarning
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs transition-all shadow-md shadow-indigo-500/20 active:scale-[0.98]"
             >
               <ExternalLink className="w-4 h-4" />
-              <span>Open Portfolio</span>
+              <span>View Portfolio</span>
             </a>
 
             <button
@@ -294,11 +301,16 @@ export default function PublishingStatus({
               <p className="text-xs text-slate-300 leading-relaxed">
                 Your portfolio will become publicly visible at:
               </p>
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-indigo-400 font-bold text-center">
-                myfolio.com/{username}
+              <div className="space-y-1.5">
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-indigo-400 font-bold text-center">
+                  {shortSubdomainDisplay}
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60 font-mono text-[11px] text-slate-400 text-center">
+                  {shortPathDisplay}
+                </div>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed pt-1">
-                Anyone with this URL will be able to view your public portfolio website.
+                Anyone with these URLs will be able to view your public portfolio website.
               </p>
             </div>
 
@@ -341,7 +353,8 @@ export default function PublishingStatus({
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
                 Your portfolio will no longer be publicly accessible at{" "}
-                <span className="font-mono text-indigo-300 font-semibold">myfolio.com/{username}</span>.
+                <span className="font-mono text-indigo-300 font-semibold">{shortSubdomainDisplay}</span> or{" "}
+                <span className="font-mono text-indigo-300 font-semibold">{shortPathDisplay}</span>.
               </p>
               <p className="text-xs text-slate-400 leading-relaxed pt-1">
                 Your profile, projects, skills, experience, and education data will NOT be deleted.
