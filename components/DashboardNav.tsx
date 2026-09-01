@@ -46,10 +46,10 @@ export default function DashboardNav() {
     },
     {
       label: "Experience",
-      href: "#",
+      href: "/dashboard/experience",
       icon: Briefcase,
-      active: false,
-      disabled: true,
+      active: pathname.startsWith("/dashboard/experience"),
+      disabled: false,
     },
     {
       label: "Education",
