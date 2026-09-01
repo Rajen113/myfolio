@@ -1,85 +1,107 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, User, Palette, Layers, ExternalLink } from "lucide-react";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import LogoutButton from "@/components/LogoutButton";
+import { LayoutDashboard, User as UserIcon, Mail, AtSign, ExternalLink, ShieldCheck } from "lucide-react";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const session = await auth();
+
+  if (!session || !session.user) {
+    redirect("/login");
+  }
+
+  // Fetch full user record from database
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      username: true,
+      createdAt: true,
+    },
+  });
+
+  const displayName = user?.name || session.user.name || user?.username || "User";
+  const userEmail = user?.email || session.user.email || "";
+  const userUsername = user?.username || (session.user as { username?: string }).username || "";
+
   return (
-    <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
-      {/* Header */}
+    <div className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+      {/* Dashboard Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
-        <div>
-          <div className="flex items-center gap-2 text-indigo-400 text-sm font-semibold mb-1">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-indigo-400 text-sm font-semibold">
             <LayoutDashboard className="w-4 h-4" />
-            <span>Developer Workspace</span>
+            <span>Authenticated Workspace</span>
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-white">
-            Dashboard Placeholder
+            Welcome, {displayName}
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Manage your developer profile, skills, projects, and custom portfolio templates.
+          <p className="text-sm text-slate-400">
+            Manage your developer portfolio account and configuration.
           </p>
         </div>
 
-        <Link
-          href="/rajenmandal"
-          target="_blank"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-indigo-300 font-medium text-sm transition-colors self-start sm:self-auto"
-        >
-          <span>Preview Public Profile</span>
-          <ExternalLink className="w-4 h-4" />
-        </Link>
+        <div className="flex items-center gap-3">
+          {userUsername && (
+            <Link
+              href={`/${userUsername}`}
+              target="_blank"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-500/30 text-indigo-300 font-medium text-sm transition-colors"
+            >
+              <span>View Public Portfolio</span>
+              <ExternalLink className="w-4 h-4" />
+            </Link>
+          )}
+
+          <LogoutButton variant="default" />
+        </div>
       </div>
 
-      {/* Grid of Dashboard Placeholder Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Profile Card */}
-        <div className="glass-card p-6 rounded-2xl space-y-4 border border-slate-800">
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <User className="w-5 h-5" />
-            </div>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-400">Step 1 Ready</span>
-          </div>
-          <h2 className="text-lg font-semibold text-white">Profile Information</h2>
-          <p className="text-xs text-slate-400">
-            Edit full name, bio, profile image, contact details, and social platform links.
-          </p>
-          <button disabled className="w-full py-2 px-3 text-xs font-medium rounded-lg bg-slate-800 text-slate-500 cursor-not-allowed">
-            Edit Profile (Step 2+)
-          </button>
+      {/* Authenticated User Details Card */}
+      <div className="glass-card p-6 sm:p-8 rounded-2xl border border-slate-800 space-y-6 shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            <UserIcon className="w-5 h-5 text-indigo-400" />
+            <span>Account Session Profile</span>
+          </h2>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Session Active</span>
+          </span>
         </div>
 
-        {/* Experience & Projects */}
-        <div className="glass-card p-6 rounded-2xl space-y-4 border border-slate-800">
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-              <Layers className="w-5 h-5" />
-            </div>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-400">Step 1 Ready</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1.5 p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Email:</span>
+            </label>
+            <p className="text-base font-medium text-white break-all">
+              {userEmail}
+            </p>
           </div>
-          <h2 className="text-lg font-semibold text-white">Skills & Projects</h2>
-          <p className="text-xs text-slate-400">
-            Add tech stack tags, project showcases, github repositories, and work history.
-          </p>
-          <button disabled className="w-full py-2 px-3 text-xs font-medium rounded-lg bg-slate-800 text-slate-500 cursor-not-allowed">
-            Manage Content (Step 2+)
-          </button>
+
+          <div className="space-y-1.5 p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <AtSign className="w-3.5 h-3.5 text-purple-400" />
+              <span>Username:</span>
+            </label>
+            <p className="text-base font-mono font-medium text-purple-300">
+              {userUsername}
+            </p>
+          </div>
         </div>
 
-        {/* Templates */}
-        <div className="glass-card p-6 rounded-2xl space-y-4 border border-slate-800">
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400">
-              <Palette className="w-5 h-5" />
-            </div>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-400">Step 1 Ready</span>
-          </div>
-          <h2 className="text-lg font-semibold text-white">Themes & Templates</h2>
-          <p className="text-xs text-slate-400">
-            Select modern layout templates, color palettes, and typography presets.
+        {/* Dynamic Route Info */}
+        <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-400 space-y-1">
+          <p className="font-semibold text-slate-300">Your Live Portfolio URL:</p>
+          <p className="font-mono text-indigo-300">
+            myfolio.com/{userUsername}
           </p>
-          <button disabled className="w-full py-2 px-3 text-xs font-medium rounded-lg bg-slate-800 text-slate-500 cursor-not-allowed">
-            Choose Theme (Step 2+)
-          </button>
         </div>
       </div>
     </div>

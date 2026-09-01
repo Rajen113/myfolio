@@ -12,6 +12,8 @@ Every user's portfolio is dynamically served from a central PostgreSQL database 
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS (v4)
 - **Database & ORM**: PostgreSQL & Prisma ORM
+- **Authentication**: Auth.js (NextAuth v5) + bcryptjs
+- **Validation**: Zod
 - **Icons**: Lucide React
 - **Package Manager**: npm
 
@@ -22,31 +24,43 @@ Every user's portfolio is dynamically served from a central PostgreSQL database 
 ```text
 myfolio/
 ├── app/
-│   ├── layout.tsx         # Root layout with Navbar and Footer
-│   ├── page.tsx           # MyFolio Landing Page (/)
-│   ├── globals.css        # Global CSS & Tailwind configuration
+│   ├── layout.tsx                 # Root layout with Navbar, Footer, and AuthProvider
+│   ├── page.tsx                   # MyFolio Landing Page (/)
+│   ├── globals.css                # Global CSS & Tailwind configuration
+│   ├── api/
+│   │   ├── auth/
+│   │   │   ├── [...nextauth]/
+│   │   │   │   └── route.ts       # Auth.js API route handler
+│   │   │   └── signup/
+│   │   │       └── route.ts       # User registration API (bcrypt password hashing & Zod validation)
 │   ├── login/
-│   │   └── page.tsx       # Login page placeholder (/login)
+│   │   └── page.tsx               # Login page with credentials auth (/login)
 │   ├── signup/
-│   │   └── page.tsx       # Signup page placeholder (/signup)
+│   │   └── page.tsx               # Signup page with form validation (/signup)
 │   ├── dashboard/
-│   │   └── page.tsx       # Dashboard placeholder (/dashboard)
+│   │   └── page.tsx               # Protected dashboard displaying active session data (/dashboard)
 │   └── [username]/
-│       └── page.tsx       # Public portfolio dynamic route (/[username])
+│       └── page.tsx               # Public portfolio dynamic route (/[username])
 ├── components/
-│   ├── Navbar.tsx         # Top navigation bar
-│   └── Footer.tsx         # Bottom footer
+│   ├── AuthProvider.tsx           # Client SessionProvider wrapper
+│   ├── LogoutButton.tsx           # Reusable session logout button
+│   ├── Navbar.tsx                 # Dynamic top navigation bar (state-aware)
+│   └── Footer.tsx                 # Platform footer
 ├── lib/
-│   └── prisma.ts          # Singleton Prisma Client instance
+│   ├── auth.ts                    # Auth.js / NextAuth credentials configuration
+│   ├── prisma.ts                  # Singleton Prisma Client instance
+│   └── validations/
+│       └── auth.ts                # Zod schemas for signup and login
+├── middleware.ts                  # Route protection middleware for /dashboard
 ├── prisma/
-│   └── schema.prisma      # Prisma schema (User model)
-├── public/                # Static assets
+│   └── schema.prisma              # Prisma schema (User model with email, username, password hash)
 ├── types/
-│   └── index.ts           # TypeScript type definitions
-├── .env.example           # Environment variables template
-├── .gitignore             # Git ignore file
-├── package.json           # Dependencies and scripts
-└── README.md              # Project documentation
+│   ├── index.ts                   # TypeScript interfaces
+│   └── next-auth.d.ts             # Extended NextAuth session types
+├── .env.example                   # Environment variables template
+├── .gitignore                     # Git ignore file
+├── package.json                   # Dependencies and scripts
+└── README.md                      # Project documentation
 ```
 
 ---
@@ -69,10 +83,12 @@ Copy the example environment file:
 cp .env.example .env
 ```
 
-Update `.env` with your PostgreSQL database connection string:
+Update `.env` with your PostgreSQL database connection string and Auth secret:
 
 ```env
-DATABASE_URL="postgresql://username:password@localhost:5432/myfolio?schema=public"
+DATABASE_URL="postgresql://postgres:password@localhost:5432/myfolio?schema=public"
+AUTH_SECRET="super-secret-random-key-myfolio-2026"
+NEXTAUTH_URL="http://localhost:3000"
 ```
 
 ### 3. Generate Prisma Client & Run Database Migration
@@ -97,16 +113,27 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🌐 Dynamic Dynamic Routing Showcase
+## 🔒 Authentication Flow (Step 2)
 
-Try navigating to any username route:
+1. **User Registration (`/signup`)**:
+   - Accepts Full Name, Username, Email, Password, and Password Confirmation.
+   - Validated server-side via Zod schema.
+   - Passwords are salted & hashed using `bcryptjs` before PostgreSQL storage.
+   - Rejects duplicate emails and taken usernames.
 
-- [http://localhost:3000/rajenmandal](http://localhost:3000/rajenmandal)
-- [http://localhost:3000/rahul](http://localhost:3000/rahul)
-- [http://localhost:3000/amit](http://localhost:3000/amit)
-- [http://localhost:3000/neha](http://localhost:3000/neha)
+2. **User Login (`/login`)**:
+   - Authenticates using Auth.js Credentials Provider.
+   - Verifies hashed passwords securely.
+   - Redirects to `/dashboard` upon successful login.
 
-Output displayed: `Portfolio of: <username>`
+3. **Protected Route (`/dashboard`)**:
+   - Access restricted to authenticated users via server-side session check & middleware.
+   - Unauthenticated visitors are automatically redirected to `/login`.
+   - Displays actual authenticated user's Email, Username, and Full Name.
+
+4. **User Logout**:
+   - Session destroyed via `signOut()` call.
+   - User redirected to `/login`.
 
 ---
 
@@ -116,7 +143,7 @@ Run checks:
 
 ```bash
 # Check TypeScript compilation
-npx tsc --noEmit
+npm run typecheck
 
 # Check ESLint linting
 npm run lint
