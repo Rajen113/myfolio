@@ -39,6 +39,10 @@ export default async function DashboardPage() {
         select: { id: true, name: true, proficiency: true },
         orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
       },
+      experience: {
+        select: { id: true, position: true, company: true, current: true },
+        orderBy: [{ current: "desc" }, { displayOrder: "asc" }, { startDate: "desc" }],
+      },
     },
   });
 
@@ -59,6 +63,7 @@ export default async function DashboardPage() {
     { label: "Profile details", completed: Boolean(profile?.fullName && profile?.headline) },
     { label: "Projects added", completed: (user?.projects?.length || 0) > 0 },
     { label: "Skills added", completed: (user?.skills?.length || 0) > 0 },
+    { label: "Experience added", completed: (user?.experience?.length || 0) > 0 },
     {
       label: "Contact & Links",
       completed: Boolean(profile?.website || profile?.github || profile?.linkedin || profile?.email),
@@ -337,6 +342,66 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Experience Summary Card */}
+      {(() => {
+        const currentExp = user?.experience?.find((e) => e.current);
+        return (
+          <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+              <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-indigo-400" />
+                <span>Work Experience</span>
+              </h2>
+              <Link
+                href="/dashboard/experience"
+                className="text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+              >
+                Manage Experience →
+              </Link>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-950/90 border border-slate-800">
+              <div className="space-y-1">
+                <p className="text-2xl font-bold text-white tracking-tight">
+                  {user?.experience?.length || 0} position{(user?.experience?.length || 0) === 1 ? "" : "s"}
+                </p>
+                {currentExp ? (
+                  <div className="space-y-0.5 text-xs">
+                    <span className="text-emerald-400 font-semibold uppercase tracking-wider text-[10px]">
+                      Current Role
+                    </span>
+                    <p className="text-slate-200 font-semibold">{currentExp.position}</p>
+                    <p className="text-slate-400">{currentExp.company}</p>
+                  </div>
+                ) : user?.experience && user.experience.length > 0 ? (
+                  <div className="space-y-0.5 text-xs">
+                    <span className="text-slate-400 font-medium uppercase tracking-wider text-[10px]">
+                      Latest Role
+                    </span>
+                    <p className="text-slate-200 font-semibold">{user.experience[0].position}</p>
+                    <p className="text-slate-400">{user.experience[0].company}</p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400">
+                    Add your employment history to build a timeline of your career.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/dashboard/experience"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs transition-all shadow-md shadow-indigo-500/20"
+                >
+                  <Briefcase className="w-3.5 h-3.5" />
+                  <span>Manage Experience</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Account Details & Public Link Card */}
       <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">

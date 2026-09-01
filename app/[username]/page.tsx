@@ -11,11 +11,17 @@ import {
   Mail,
   Phone,
   Briefcase,
+  Building2,
   FolderGit2,
   Star,
   Wrench,
 } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/SocialIcons";
+import {
+  EMPLOYMENT_TYPE_LABELS,
+  EmploymentTypeEnum,
+  formatExperienceDate,
+} from "@/lib/validations/experience";
 
 interface PublicPortfolioPageProps {
   params: Promise<{
@@ -94,6 +100,24 @@ export default async function PublicPortfolioPage({
         orderBy: [
           { displayOrder: "asc" },
           { createdAt: "desc" },
+        ],
+      },
+      experience: {
+        select: {
+          id: true,
+          company: true,
+          position: true,
+          employmentType: true,
+          location: true,
+          startDate: true,
+          endDate: true,
+          current: true,
+          description: true,
+        },
+        orderBy: [
+          { current: "desc" },
+          { displayOrder: "asc" },
+          { startDate: "desc" },
         ],
       },
     },
@@ -331,6 +355,85 @@ export default async function PublicPortfolioPage({
                 </div>
               );
             })()}
+          </div>
+        )}
+
+        {/* Experience Section - Professional Timeline */}
+        {user.experience && user.experience.length > 0 && (
+          <div className="space-y-6 pt-6 border-t border-slate-800/80 text-left">
+            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center justify-center gap-2 mb-6">
+              <Briefcase className="w-4 h-4 text-indigo-400" />
+              <span>Work Experience</span>
+            </h2>
+
+            <div className="relative border-l-2 border-slate-800 ml-3 sm:ml-6 pl-6 sm:pl-8 space-y-8">
+              {user.experience.map((exp) => {
+                const empLabel =
+                  EMPLOYMENT_TYPE_LABELS[exp.employmentType as EmploymentTypeEnum] ||
+                  exp.employmentType;
+                const startStr = formatExperienceDate(exp.startDate.toISOString());
+                const endStr = exp.current
+                  ? "Present"
+                  : formatExperienceDate(exp.endDate ? exp.endDate.toISOString() : null);
+                const dateRange = `${startStr} — ${endStr}`;
+
+                return (
+                  <div key={exp.id} className="relative group">
+                    {/* Timeline dot */}
+                    <div
+                      className={`absolute -left-[31px] sm:-left-[39px] top-1.5 w-4 h-4 rounded-full border-2 ${
+                        exp.current
+                          ? "bg-emerald-500 border-emerald-400 shadow-md shadow-emerald-500/50 animate-pulse"
+                          : "bg-slate-900 border-indigo-500"
+                      }`}
+                    />
+
+                    <div className="p-5 rounded-2xl glass-card border border-slate-800 space-y-3 shadow-lg hover:border-slate-700/80 transition-all">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 border-b border-slate-800/60 pb-3">
+                        <div>
+                          <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                            {exp.position}
+                          </h3>
+                          <p className="text-sm font-semibold text-indigo-300 flex items-center gap-1.5 mt-0.5">
+                            <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span>{exp.company}</span>
+                          </p>
+                        </div>
+
+                        <div className="text-xs font-mono text-slate-300 bg-slate-900/90 px-3 py-1 rounded-lg border border-slate-800 shrink-0 self-start sm:self-auto font-medium">
+                          {dateRange}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-semibold">
+                          {empLabel}
+                        </span>
+
+                        {exp.current && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold">
+                            Current Role
+                          </span>
+                        )}
+
+                        {exp.location && (
+                          <span className="text-slate-400 flex items-center gap-1 font-medium">
+                            <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                            <span>{exp.location}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {exp.description && (
+                        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-1 whitespace-pre-line">
+                          {exp.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 

@@ -18,9 +18,10 @@ model User {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  profile   Profile?
-  projects  Project[]
-  skills    Skill[]
+  profile    Profile?
+  projects   Project[]
+  skills     Skill[]
+  experience Experience[]
 }
 
 model Profile {
@@ -82,4 +83,35 @@ model Skill {
 
   @@index([userId])
   @@index([userId, displayOrder])
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+  SELF_EMPLOYED
+  OTHER
+}
+
+model Experience {
+  id             String         @id @default(cuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company        String
+  position       String
+  employmentType EmploymentType
+  location       String?
+  startDate      DateTime
+  endDate        DateTime?
+  current        Boolean        @default(false)
+  description    String?
+  displayOrder   Int            @default(0)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([userId, displayOrder])
+  @@index([userId, current])
 }
