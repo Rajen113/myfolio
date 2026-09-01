@@ -3,6 +3,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import LogoutButton from "@/components/LogoutButton";
+import PublishingStatus from "@/components/portfolio/PublishingStatus";
 import {
   LayoutDashboard,
   ExternalLink,
@@ -113,6 +114,20 @@ export default async function DashboardPage() {
           <LogoutButton variant="outline" />
         </div>
       </div>
+
+      {/* Publishing Status & Controls Card */}
+      <PublishingStatus
+        initialIsPublished={user.portfolioSettings?.isPublished ?? false}
+        username={userUsername}
+        readiness={[
+          { label: "Username", completed: Boolean(user.username) },
+          { label: "Profile", completed: Boolean(profile?.fullName && profile?.headline) },
+          { label: "Projects", completed: (user?.projects?.length || 0) > 0, count: user?.projects?.length || 0, optional: true },
+          { label: "Skills", completed: (user?.skills?.length || 0) > 0, count: user?.skills?.length || 0, optional: true },
+          { label: "Experience", completed: (user?.experience?.length || 0) > 0, count: user?.experience?.length || 0, optional: true },
+          { label: "Education", completed: (user?.education?.length || 0) > 0, count: user?.education?.length || 0, optional: true },
+        ]}
+      />
 
       {/* Main Grid: Profile Summary & Completion Tracker */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

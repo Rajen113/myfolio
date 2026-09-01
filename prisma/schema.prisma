@@ -78,6 +78,9 @@ model PortfolioSettings {
   buttonStyle     ButtonStyle       @default(ROUNDED)
   borderRadius    BorderRadius      @default(MEDIUM)
 
+  isPublished     Boolean           @default(false)
+  publishedAt     DateTime?
+
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
