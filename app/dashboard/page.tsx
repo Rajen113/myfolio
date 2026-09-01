@@ -18,7 +18,9 @@ import {
   FolderGit2,
   Star,
   Wrench,
+  GraduationCap,
 } from "lucide-react";
+import { getDegreeLabel } from "@/lib/constants/education-options";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -43,6 +45,10 @@ export default async function DashboardPage() {
         select: { id: true, position: true, company: true, current: true },
         orderBy: [{ current: "desc" }, { displayOrder: "asc" }, { startDate: "desc" }],
       },
+      education: {
+        select: { id: true, degree: true, customDegree: true, institution: true, current: true },
+        orderBy: [{ current: "desc" }, { displayOrder: "asc" }, { startDate: "desc" }],
+      },
     },
   });
 
@@ -64,6 +70,7 @@ export default async function DashboardPage() {
     { label: "Projects added", completed: (user?.projects?.length || 0) > 0 },
     { label: "Skills added", completed: (user?.skills?.length || 0) > 0 },
     { label: "Experience added", completed: (user?.experience?.length || 0) > 0 },
+    { label: "Education added", completed: (user?.education?.length || 0) > 0 },
     {
       label: "Contact & Links",
       completed: Boolean(profile?.website || profile?.github || profile?.linkedin || profile?.email),
@@ -396,6 +403,59 @@ export default async function DashboardPage() {
                 >
                   <Briefcase className="w-3.5 h-3.5" />
                   <span>Manage Experience</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Education Summary Card */}
+      {(() => {
+        const latestEdu = user?.education?.[0];
+        const eduCount = user?.education?.length || 0;
+        return (
+          <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+              <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-indigo-400" />
+                <span>Education</span>
+              </h2>
+              <Link
+                href="/dashboard/education"
+                className="text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+              >
+                Manage Education →
+              </Link>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-950/90 border border-slate-800">
+              <div className="space-y-1">
+                <p className="text-2xl font-bold text-white tracking-tight">
+                  {eduCount} qualification{eduCount === 1 ? "" : "s"}
+                </p>
+                {latestEdu ? (
+                  <div className="space-y-0.5 text-xs">
+                    <span className="text-indigo-400 font-semibold uppercase tracking-wider text-[10px]">
+                      {latestEdu.current ? "Current Studies" : "Latest Qualification"}
+                    </span>
+                    <p className="text-slate-200 font-semibold">{getDegreeLabel(latestEdu.degree, latestEdu.customDegree)}</p>
+                    <p className="text-slate-400">{latestEdu.institution}</p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400">
+                    Add your academic background to complete your portfolio.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/dashboard/education"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs transition-all shadow-md shadow-indigo-500/20"
+                >
+                  <GraduationCap className="w-3.5 h-3.5" />
+                  <span>Manage Education</span>
                 </Link>
               </div>
             </div>
