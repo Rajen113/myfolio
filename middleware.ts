@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { extractSubdomain } from "@/lib/utils/subdomain";
+import { extractSubdomain, getRootDomain } from "@/lib/utils/subdomain";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const hostname = req.headers.get("host") || req.nextUrl.hostname;
+  const rawHostname = req.headers.get("host") || req.nextUrl.hostname;
+  const hostname = rawHostname.toLowerCase().split(":")[0];
 
-  // Extract subdomain if present
+  // 1. Extract subdomain if present (e.g. rajen.myfolio.com or rajen.localhost)
   const subdomain = extractSubdomain(hostname);
 
   if (subdomain) {
@@ -23,6 +24,29 @@ export async function middleware(req: NextRequest) {
     // Rewrite internal URL to /[subdomain] portfolio route
     const url = req.nextUrl.clone();
     url.pathname = `/${subdomain}${pathname === "/" ? "" : pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
+  // 2. Custom Domain handling (e.g. rajenmandal.com or www.rajenmandal.com)
+  const rootDomain = getRootDomain().toLowerCase().trim();
+  const isRootDomain =
+    hostname === rootDomain ||
+    hostname === `www.${rootDomain}` ||
+    hostname === "localhost" ||
+    hostname === "127.0.0.1";
+
+  if (!isRootDomain) {
+    if (
+      pathname.startsWith("/_next") ||
+      pathname.startsWith("/api") ||
+      pathname.includes(".")
+    ) {
+      return NextResponse.next();
+    }
+
+    // Rewrite internal URL to custom domain resolution handler
+    const url = req.nextUrl.clone();
+    url.pathname = `/${hostname}${pathname === "/" ? "" : pathname}`;
     return NextResponse.rewrite(url);
   }
 

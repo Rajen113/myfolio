@@ -24,6 +24,7 @@ model User {
   experience Experience[]
   education         Education[]
   portfolioSettings PortfolioSettings?
+  customDomains     CustomDomain[]
 }
 
 enum PortfolioTemplate {
@@ -201,4 +202,27 @@ model Education {
   @@index([userId])
   @@index([userId, displayOrder])
   @@index([userId, current])
+}
+
+enum CustomDomainStatus {
+  PENDING
+  VERIFIED
+  ACTIVE
+  FAILED
+}
+
+model CustomDomain {
+  id                String             @id @default(cuid())
+  userId            String
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domain            String             @unique
+  status            CustomDomainStatus @default(PENDING)
+  verificationToken String             @unique
+  isPrimary         Boolean            @default(false)
+  verifiedAt        DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([domain])
+  @@index([userId])
 }
