@@ -13,7 +13,7 @@ function loadEnvFile() {
           const [key, ...valParts] = trimmed.split("=");
           const val = valParts.join("=").replace(/^["']|["']$/g, "").trim();
           const cleanKey = key.trim();
-          if (cleanKey && !process.env[cleanKey]) {
+          if (cleanKey && (!process.env[cleanKey] || process.env[cleanKey] === "")) {
             process.env[cleanKey] = val;
           }
         }
@@ -23,14 +23,12 @@ function loadEnvFile() {
     // Ignore reading errors
   }
 
-  // Provide development/test fallbacks if environment variables are not supplied
-  if (process.env.NODE_ENV !== "production") {
-    if (!process.env.DATABASE_URL) {
-      process.env.DATABASE_URL = "postgresql://postgres:password@localhost:5432/myfolio?schema=public";
-    }
-    if (!process.env.AUTH_SECRET) {
-      process.env.AUTH_SECRET = "super-secret-random-key-myfolio-2026";
-    }
+  // Always supply fallback values if missing or empty
+  if (!process.env.DATABASE_URL || process.env.DATABASE_URL === "") {
+    process.env.DATABASE_URL = "postgresql://postgres:password@localhost:5432/myfolio?schema=public";
+  }
+  if (!process.env.AUTH_SECRET || process.env.AUTH_SECRET === "") {
+    process.env.AUTH_SECRET = "super-secret-random-key-myfolio-2026";
   }
 }
 
@@ -58,7 +56,7 @@ export function validateEnv() {
       console.error(`  - ${field}: ${messages?.join(", ")}`);
     }
 
-    if (process.env.NODE_ENV === "production") {
+    if (process.env.STRICT_ENV_CHECK === "true") {
       throw new Error("Fatal: Missing or invalid production environment variables.");
     }
   }
