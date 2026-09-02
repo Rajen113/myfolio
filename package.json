@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "npx -y tsx scripts/test-analytics.ts",
+    "test": "npx -y tsx scripts/test-analytics.ts && npx -y tsx scripts/test-contact.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

@@ -6,7 +6,6 @@ import {
   MapPin,
   Globe,
   Mail,
-  Phone,
   Briefcase,
   Building2,
   FolderGit2,
@@ -17,6 +16,7 @@ import {
   Award,
 } from "lucide-react";
 import { GithubIcon, LinkedinIcon, TwitterIcon } from "@/components/SocialIcons";
+import ContactForm from "@/components/portfolio/contact/ContactForm";
 import {
   PortfolioData,
   PortfolioCustomization,
@@ -675,44 +675,7 @@ export default function ModernTemplate({
               <span>Get In Touch</span>
             </h2>
 
-            <div
-              className={`p-6 ${cardRadiusClass} border space-y-4 max-w-md mx-auto shadow-xl ${
-                isLight
-                  ? "bg-white border-slate-200"
-                  : "bg-slate-900/90 border-slate-800"
-              }`}
-            >
-              <p className="text-xs sm:text-sm opacity-90 leading-relaxed">
-                Feel free to reach out for collaborations, job opportunities, or questions.
-              </p>
-
-              <div className="flex flex-col gap-2.5 pt-2">
-                {profile?.showEmail && profile?.email && (
-                  <a
-                    href={`mailto:${profile.email}`}
-                    className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 ${buttonClass} text-white font-semibold text-xs transition-all shadow-md`}
-                    style={{ backgroundColor: primaryColor }}
-                  >
-                    <Mail className="w-4 h-4" />
-                    <span>{profile.email}</span>
-                  </a>
-                )}
-
-                {profile?.showPhone && profile?.phone && (
-                  <a
-                    href={`tel:${profile.phone}`}
-                    className={`inline-flex items-center justify-center gap-2 px-4 py-2 ${buttonClass} border font-semibold text-xs transition-colors ${
-                      isLight
-                        ? "bg-slate-100 border-slate-200 text-slate-800"
-                        : "bg-slate-900 border-slate-800 text-slate-200"
-                    }`}
-                  >
-                    <Phone className="w-3.5 h-3.5" style={{ color: primaryColor }} />
-                    <span>{profile.phone}</span>
-                  </a>
-                )}
-              </div>
-            </div>
+            <ContactForm username={username} customization={customization} />
           </section>
         )}
       </main>

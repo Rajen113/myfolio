@@ -26,6 +26,7 @@ model User {
   portfolioSettings PortfolioSettings?
   customDomains     CustomDomain[]
   portfolioViewEvents PortfolioViewEvent[]
+  contactMessages   ContactMessage[]
 }
 
 enum PortfolioTemplate {
@@ -90,6 +91,7 @@ model PortfolioSettings {
   updatedAt       DateTime          @updatedAt
 
   viewEvents      PortfolioViewEvent[]
+  contactMessages ContactMessage[]
 
   @@index([userId])
 }
@@ -255,4 +257,35 @@ model PortfolioViewEvent {
   @@index([userId, visitorHash, viewedAt])
   @@index([portfolioId, visitorHash])
 }
+
+enum ContactMessageStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
+model ContactMessage {
+  id          String               @id @default(cuid())
+
+  userId      String
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  portfolioId String
+  portfolio   PortfolioSettings   @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  name        String
+  email       String
+  subject     String?
+  message     String
+
+  status      ContactMessageStatus @default(UNREAD)
+
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([portfolioId, createdAt])
+  @@index([userId, status])
+}
+
 

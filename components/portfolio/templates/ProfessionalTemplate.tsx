@@ -15,6 +15,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/SocialIcons";
+import ContactForm from "@/components/portfolio/contact/ContactForm";
 import { PortfolioData, PortfolioCustomization } from "@/types/portfolio";
 import {
   EMPLOYMENT_TYPE_LABELS,
@@ -67,14 +68,7 @@ export default function ProfessionalTemplate({
   const hasSkills = customization.showSkills && skills.length > 0;
   const hasProjects = customization.showProjects && projects.length > 0;
   const hasEducation = customization.showEducation && education.length > 0;
-  const hasContact = customization.showContact && Boolean(
-    profile?.website ||
-      profile?.github ||
-      profile?.linkedin ||
-      profile?.twitter ||
-      (profile?.showEmail && profile?.email) ||
-      (profile?.showPhone && profile?.phone)
-  );
+  const hasContact = customization.showContact;
   const hasSocial = customization.showSocialLinks;
 
   return (
@@ -493,22 +487,14 @@ export default function ProfessionalTemplate({
           {hasContact && (
             <section
               id="contact"
-              className={`pt-6 border-t text-center space-y-2 ${
+              className={`pt-6 border-t text-center space-y-4 ${
                 isLight ? "border-slate-200" : "border-slate-800/80"
               }`}
             >
-              <p className="text-xs font-semibold opacity-70">
-                Interested in working together?
-              </p>
-              {profile?.showEmail && profile?.email && (
-                <a
-                  href={`mailto:${profile.email}`}
-                  className="inline-block text-sm font-bold hover:underline transition-all"
-                  style={{ color: primaryColor }}
-                >
-                  {profile.email}
-                </a>
-              )}
+              <h2 className="text-sm font-bold uppercase tracking-wider">
+                Contact & Inquiries
+              </h2>
+              <ContactForm username={username} customization={customization} />
             </section>
           )}
         </div>
