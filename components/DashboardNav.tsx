@@ -13,6 +13,7 @@ import {
   Palette,
   BarChart3,
   Mail,
+  FileText,
   Globe,
   Settings,
 } from "lucide-react";
@@ -89,6 +90,13 @@ export default function DashboardNav() {
       href: "/dashboard/messages",
       icon: Mail,
       active: pathname.startsWith("/dashboard/messages"),
+      disabled: false,
+    },
+    {
+      label: "Resume",
+      href: "/dashboard/resume",
+      icon: FileText,
+      active: pathname.startsWith("/dashboard/resume"),
       disabled: false,
     },
     {
