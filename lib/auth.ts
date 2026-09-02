@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { UserRole, UserStatus } from "@prisma/client";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -28,6 +29,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             return null;
           }
 
+          // Check account status
+          if (user.status === UserStatus.SUSPENDED) {
+            console.warn(`Blocked login attempt for suspended user: ${user.email}`);
+            return null;
+          }
+
           const isPasswordValid = await compare(password, user.password);
           if (!isPasswordValid) {
             return null;
@@ -38,6 +45,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: user.email,
             name: user.name || user.username || undefined,
             username: user.username || undefined,
+            role: user.role,
+            status: user.status,
           };
         } catch (error) {
           console.error("Auth authorize error:", error);
@@ -51,6 +60,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.username = (user as { username?: string }).username;
+        token.role = (user as { role?: UserRole }).role;
+        token.status = (user as { status?: UserStatus }).status;
       }
       if (trigger === "update" && session?.username) {
         token.username = session.username;
@@ -61,6 +72,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user && token) {
         session.user.id = token.id as string;
         session.user.username = token.username as string;
+        session.user.role = token.role as UserRole;
+        session.user.status = token.status as UserStatus;
       }
       return session;
     },

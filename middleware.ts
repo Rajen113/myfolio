@@ -53,10 +53,14 @@ export async function middleware(req: NextRequest) {
   // --- ROOT DOMAIN AUTHENTICATION ROUTE PROTECTION ---
   const token = await getToken({ req, secret: process.env.AUTH_SECRET });
 
-  // Protect /dashboard and /username routes
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/username")) {
+  // Protect /dashboard, /admin, and /username routes
+  if (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/username")
+  ) {
     if (!token) {
-      const loginUrl = new URL("/login", req.url);
+      const loginUrl = new URL(`/login?callbackUrl=${encodeURIComponent(pathname)}`, req.url);
       return NextResponse.redirect(loginUrl);
     }
   }

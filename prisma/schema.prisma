@@ -10,24 +10,40 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
 model User {
-  id        String   @id @default(cuid())
-  name      String?
-  email     String   @unique
-  username  String?  @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  profile    Profile?
-  projects   Project[]
-  skills     Skill[]
-  experience Experience[]
-  education         Education[]
-  portfolioSettings PortfolioSettings?
-  customDomains     CustomDomain[]
+  id                  String               @id @default(cuid())
+  name                String?
+  email               String               @unique
+  username            String?              @unique
+  password            String
+  role                UserRole             @default(USER)
+  status              UserStatus           @default(ACTIVE)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  profile             Profile?
+  projects            Project[]
+  skills              Skill[]
+  experience          Experience[]
+  education           Education[]
+  portfolioSettings   PortfolioSettings?
+  customDomains       CustomDomain[]
   portfolioViewEvents PortfolioViewEvent[]
-  contactMessages   ContactMessage[]
-  resumeSettings    ResumeSettings?
+  contactMessages     ContactMessage[]
+  resumeSettings      ResumeSettings?
+  adminAuditLogs      AdminAuditLog[]      @relation("AdminAudits")
+
+  @@index([role])
+  @@index([status])
 }
 
 enum PortfolioTemplate {
@@ -201,13 +217,13 @@ model Education {
   customFieldOfStudy String?
   location           String?
   startDate          DateTime
-  endDate      DateTime?
-  current      Boolean   @default(false)
-  grade        String?
-  description  String?
-  displayOrder Int       @default(0)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  endDate            DateTime?
+  current            Boolean   @default(false)
+  grade              String?
+  description        String?
+  displayOrder       Int       @default(0)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   @@index([userId])
   @@index([userId, displayOrder])
@@ -318,4 +334,17 @@ model ResumeSettings {
   @@index([userId])
 }
 
+model AdminAuditLog {
+  id          String   @id @default(cuid())
+  adminUserId String
+  adminUser   User     @relation("AdminAudits", fields: [adminUserId], references: [id], onDelete: Cascade)
+  action      String
+  targetType  String
+  targetId    String?
+  metadata    String?
+  createdAt   DateTime @default(now())
 
+  @@index([adminUserId])
+  @@index([action])
+  @@index([createdAt])
+}
