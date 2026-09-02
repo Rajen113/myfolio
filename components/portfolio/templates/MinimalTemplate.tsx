@@ -4,11 +4,10 @@ import Link from "next/link";
 import {
   MapPin,
   Globe,
-  Mail,
-  Phone,
   ArrowUpRight,
 } from "lucide-react";
 import { GithubIcon, LinkedinIcon, TwitterIcon } from "@/components/SocialIcons";
+import ContactForm from "@/components/portfolio/contact/ContactForm";
 import { PortfolioData, PortfolioCustomization } from "@/types/portfolio";
 import {
   EMPLOYMENT_TYPE_LABELS,
@@ -364,29 +363,7 @@ export default function MinimalTemplate({
               Contact
             </h2>
 
-            <div className="space-y-3 text-xs font-mono">
-              {profile?.showEmail && profile?.email && (
-                <p className="flex items-center gap-2">
-                  <Mail className="w-3.5 h-3.5 opacity-60" />
-                  <a
-                    href={`mailto:${profile.email}`}
-                    className="hover:underline"
-                    style={{ color: primaryColor }}
-                  >
-                    {profile.email}
-                  </a>
-                </p>
-              )}
-
-              {profile?.showPhone && profile?.phone && (
-                <p className="flex items-center gap-2">
-                  <Phone className="w-3.5 h-3.5 opacity-60" />
-                  <a href={`tel:${profile.phone}`} className="hover:underline">
-                    {profile.phone}
-                  </a>
-                </p>
-              )}
-            </div>
+            <ContactForm username={username} customization={customization} />
           </section>
         )}
       </main>
