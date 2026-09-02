@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 export async function PATCH(req: Request) {
   try {
@@ -53,6 +54,12 @@ export async function PATCH(req: Request) {
         seoDescription,
       },
     });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+    revalidatePortfolioCache({ userId, username: user?.username });
 
     return NextResponse.json({
       success: true,

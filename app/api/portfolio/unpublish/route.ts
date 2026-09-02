@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 export async function POST() {
   try {
@@ -26,12 +27,20 @@ export async function POST() {
       );
     }
 
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+
     const updatedSettings = await prisma.portfolioSettings.update({
       where: { userId },
       data: {
         isPublished: false,
       },
     });
+
+    // Invalidate public portfolio cache so unpublished portfolio is immediately 404/hidden
+    revalidatePortfolioCache({ userId, username: user?.username });
 
     return NextResponse.json({
       message: "✓ Portfolio unpublished successfully.",

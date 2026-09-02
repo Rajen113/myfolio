@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 interface RouteParams {
   params: Promise<{
@@ -44,6 +45,8 @@ export async function POST(req: Request, { params }: RouteParams) {
       where: { id: customDomain.id },
       data: { isPrimary: true, status: "ACTIVE" },
     });
+
+    revalidatePortfolioCache({ userId, domain: updated.domain });
 
     return NextResponse.json({
       success: true,

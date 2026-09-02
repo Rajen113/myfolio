@@ -95,6 +95,7 @@ model PortfolioSettings {
   contactMessages ContactMessage[]
 
   @@index([userId])
+  @@index([userId, isPublished])
 }
 
 model Profile {
@@ -234,6 +235,8 @@ model CustomDomain {
 
   @@index([domain])
   @@index([userId])
+  @@index([domain, status])
+  @@index([userId, status])
 }
 
 model PortfolioViewEvent {

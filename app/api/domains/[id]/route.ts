@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 interface RouteParams {
   params: Promise<{
@@ -48,6 +49,8 @@ export async function DELETE(req: Request, { params }: RouteParams) {
         });
       }
     }
+
+    revalidatePortfolioCache({ userId, domain: customDomain.domain });
 
     return NextResponse.json({
       success: true,

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validateDomain } from "@/lib/utils/domain";
 import { generateVerificationToken, getExpectedTxtRecordValue } from "@/lib/services/dns-verification";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 export async function GET() {
   try {
@@ -81,6 +82,8 @@ export async function POST(req: Request) {
         isPrimary: existingUserDomainsCount === 0,
       },
     });
+
+    revalidatePortfolioCache({ userId, domain });
 
     return NextResponse.json(
       {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { educationSchema } from "@/lib/validations/education";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -101,6 +102,12 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       },
     });
 
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { username: true },
+    });
+    revalidatePortfolioCache({ userId: session.user.id, username: user?.username });
+
     return NextResponse.json({
       message: "Education record updated successfully.",
       education: updatedEducation,
@@ -144,6 +151,12 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     await prisma.education.delete({
       where: { id },
     });
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { username: true },
+    });
+    revalidatePortfolioCache({ userId: session.user.id, username: user?.username });
 
     return NextResponse.json({
       message: "Education record deleted successfully.",

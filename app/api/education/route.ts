@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { educationSchema } from "@/lib/validations/education";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 export async function GET() {
   try {
@@ -86,6 +87,12 @@ export async function POST(req: Request) {
         displayOrder,
       },
     });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+    revalidatePortfolioCache({ userId, username: user?.username });
 
     return NextResponse.json(
       { message: "Education record created successfully.", education: newEducation },

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { updateUsernameSchema } from "@/lib/validations/auth";
 import { Prisma } from "@prisma/client";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 export async function POST(req: Request) {
   try {
@@ -44,6 +45,11 @@ export async function POST(req: Request) {
       );
     }
 
+    const currentUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { username: true },
+    });
+
     // Save to database
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
@@ -53,6 +59,16 @@ export async function POST(req: Request) {
         email: true,
         username: true,
       },
+    });
+
+    // Revalidate cache for both old username and new username
+    revalidatePortfolioCache({
+      userId: session.user.id,
+      username: currentUser?.username,
+    });
+    revalidatePortfolioCache({
+      userId: session.user.id,
+      username: normalizedUsername,
     });
 
     return NextResponse.json({

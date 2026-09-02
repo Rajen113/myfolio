@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { experienceSchema } from "@/lib/validations/experience";
 import { EmploymentType } from "@prisma/client";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -99,6 +100,12 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       },
     });
 
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { username: true },
+    });
+    revalidatePortfolioCache({ userId: session.user.id, username: user?.username });
+
     return NextResponse.json({
       message: "Experience record updated successfully.",
       experience: updatedExperience,
@@ -142,6 +149,12 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     await prisma.experience.delete({
       where: { id },
     });
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { username: true },
+    });
+    revalidatePortfolioCache({ userId: session.user.id, username: user?.username });
 
     return NextResponse.json({
       message: "Experience record deleted successfully.",

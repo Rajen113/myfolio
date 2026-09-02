@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { experienceSchema } from "@/lib/validations/experience";
 import { EmploymentType } from "@prisma/client";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 export async function GET() {
   try {
@@ -83,6 +84,12 @@ export async function POST(req: Request) {
         displayOrder,
       },
     });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+    revalidatePortfolioCache({ userId, username: user?.username });
 
     return NextResponse.json(
       { message: "Experience record created successfully.", experience },

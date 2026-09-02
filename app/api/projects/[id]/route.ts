@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { projectSchema } from "@/lib/validations/project";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 interface RouteParams {
   params: Promise<{
@@ -107,6 +108,12 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       },
     });
 
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+    revalidatePortfolioCache({ userId, username: user?.username });
+
     return NextResponse.json({
       success: true,
       message: "Project updated successfully",
@@ -154,6 +161,12 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     await prisma.project.delete({
       where: { id },
     });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+    revalidatePortfolioCache({ userId, username: user?.username });
 
     return NextResponse.json({
       success: true,
