@@ -11,6 +11,7 @@
     "test": "tsx scripts/smoke-test.ts && tsx scripts/test-security.ts && tsx scripts/test-analytics.ts && tsx scripts/test-contact.ts && tsx scripts/test-resume.ts && tsx scripts/test-admin.ts",
     "smoke-test": "tsx scripts/smoke-test.ts",
     "prisma:validate": "prisma validate",
+    "postinstall": "prisma generate && node scripts/fix-hyphenate.mjs",
     "prepare": "husky"
   },
   "lint-staged": {
