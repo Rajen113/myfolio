@@ -11,6 +11,7 @@ import {
   GraduationCap,
   LayoutTemplate,
   Palette,
+  BarChart3,
   Globe,
   Settings,
 } from "lucide-react";
@@ -73,6 +74,13 @@ export default function DashboardNav() {
       href: "/dashboard/customize",
       icon: Palette,
       active: pathname.startsWith("/dashboard/customize"),
+      disabled: false,
+    },
+    {
+      label: "Analytics",
+      href: "/dashboard/analytics",
+      icon: BarChart3,
+      active: pathname.startsWith("/dashboard/analytics"),
       disabled: false,
     },
     {

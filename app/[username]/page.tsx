@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import PortfolioRenderer from "@/components/portfolio/PortfolioRenderer";
 import { PortfolioData, PortfolioCustomization } from "@/types/portfolio";
 import { DEFAULT_CUSTOMIZATION } from "@/lib/constants/portfolio-customization";
 import { getPrimaryPortfolioUrl } from "@/lib/utils/portfolio-url";
+import { recordPortfolioView } from "@/lib/analytics/record-view";
 
 interface PublicPortfolioPageProps {
   params: Promise<{
@@ -313,6 +315,33 @@ export default async function PublicPortfolioPage({
   // If user does not exist or portfolio is not published, return 404 (do not leak private drafts)
   if (!user || !user.portfolioSettings || !user.portfolioSettings.isPublished) {
     notFound();
+  }
+
+  // Asynchronously record view event without blocking response
+  try {
+    const reqHeaders = await headers();
+    const userAgent = reqHeaders.get("user-agent");
+    const referer = reqHeaders.get("referer");
+    const host = reqHeaders.get("host");
+    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0] || reqHeaders.get("x-real-ip");
+    const countryCode =
+      reqHeaders.get("x-vercel-ip-country") ||
+      reqHeaders.get("cf-ipcountry") ||
+      reqHeaders.get("x-country") ||
+      reqHeaders.get("cloudfront-viewer-country");
+
+    recordPortfolioView({
+      userId: user.id,
+      portfolioId: user.portfolioSettings.id,
+      isPublished: user.portfolioSettings.isPublished,
+      userAgent,
+      referer,
+      host,
+      ip,
+      countryCode,
+    }).catch(() => {});
+  } catch {
+    // Non-blocking fallback
   }
 
   // Transform Prisma records into clean PortfolioData DTO
