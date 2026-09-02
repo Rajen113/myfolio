@@ -1,7 +1,27 @@
+import module from "module";
+
+// Patch module resolution for @react-pdf/hyphenate/en-us under Node 20 strict ESM export rules
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const originalResolve = (module as any)._resolveFilename;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(module as any)._resolveFilename = function (request: string, parent: any, isMain: boolean, options: any) {
+  if (request === "@react-pdf/hyphenate/en-us" || request === "@react-pdf/hyphenate/en-us.js") {
+    try {
+      return require.resolve("@react-pdf/hyphenate/lib/en-us.js");
+    } catch {
+      // Fallback
+    }
+  }
+  return originalResolve.call(this, request, parent, isMain, options);
+};
+
 import { sanitizeFilename, formatPDFDateRange } from "../lib/resume/pdf/pdf-utils";
-import { renderToBuffer } from "@react-pdf/renderer";
+import { renderToBuffer, Font } from "@react-pdf/renderer";
 import PDFRenderer from "../lib/resume/pdf/PDFRenderer";
 import { ResumeData } from "../lib/resume/types";
+
+// Register hyphenation callback so @react-pdf doesn't dynamically load hyphenation subpaths
+Font.registerHyphenationCallback((word) => [word]);
 
 function assert(condition: boolean, message: string) {
   if (!condition) {
