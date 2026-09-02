@@ -12,6 +12,7 @@ import {
   LayoutTemplate,
   Palette,
   BarChart3,
+  Mail,
   Globe,
   Settings,
 } from "lucide-react";
@@ -81,6 +82,13 @@ export default function DashboardNav() {
       href: "/dashboard/analytics",
       icon: BarChart3,
       active: pathname.startsWith("/dashboard/analytics"),
+      disabled: false,
+    },
+    {
+      label: "Messages",
+      href: "/dashboard/messages",
+      icon: Mail,
+      active: pathname.startsWith("/dashboard/messages"),
       disabled: false,
     },
     {
