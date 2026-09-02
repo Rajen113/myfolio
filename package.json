@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "node .next/standalone/server.js",
-    "lint": "eslint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "npx tsx scripts/smoke-test.ts && npx tsx scripts/test-security.ts && npx tsx scripts/test-analytics.ts && npx tsx scripts/test-contact.ts && npx tsx scripts/test-resume.ts",
     "smoke-test": "npx tsx scripts/smoke-test.ts",
