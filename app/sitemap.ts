@@ -3,34 +3,54 @@ import { prisma } from "@/lib/prisma";
 import { getPrimaryPortfolioUrl } from "@/lib/utils/portfolio-url";
 import { getRootDomain } from "@/lib/utils/subdomain";
 
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const rootDomain = getRootDomain();
   const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
   const baseUrl = `${protocol}://${rootDomain}`;
 
-  // Query only published user portfolios
-  const publishedUsers = await prisma.user.findMany({
-    where: {
-      username: { not: null },
-      portfolioSettings: {
-        isPublished: true,
-      },
-    },
-    select: {
-      username: true,
-      updatedAt: true,
-      portfolioSettings: {
-        select: {
-          publishedAt: true,
-          updatedAt: true,
+  let publishedUsers: Array<{
+    username: string | null;
+    updatedAt: Date;
+    portfolioSettings: {
+      publishedAt: Date | null;
+      updatedAt: Date;
+    } | null;
+    customDomains: Array<{
+      domain: string;
+      status: string;
+      isPrimary: boolean;
+    }>;
+  }> = [];
+
+  try {
+    // Query published user portfolios
+    publishedUsers = await prisma.user.findMany({
+      where: {
+        username: { not: null },
+        portfolioSettings: {
+          isPublished: true,
         },
       },
-      customDomains: {
-        where: { status: { in: ["VERIFIED", "ACTIVE"] } },
-        select: { domain: true, status: true, isPrimary: true },
+      select: {
+        username: true,
+        updatedAt: true,
+        portfolioSettings: {
+          select: {
+            publishedAt: true,
+            updatedAt: true,
+          },
+        },
+        customDomains: {
+          where: { status: { in: ["VERIFIED", "ACTIVE"] } },
+          select: { domain: true, status: true, isPrimary: true },
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.warn("⚠️ Database unreachable during sitemap generation; falling back to base sitemap:", (error as Error).message);
+  }
 
   const portfolioEntries: MetadataRoute.Sitemap = publishedUsers
     .map((user) => {

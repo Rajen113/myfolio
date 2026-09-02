@@ -13,6 +13,7 @@ const cspHeader = `
 `.replace(/\s{2,}/g, " ").trim();
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   reactStrictMode: true,
   compress: true,
   images: {

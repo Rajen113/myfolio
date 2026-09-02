@@ -1,8 +1,8 @@
 # MyFolio — Professional Portfolio Platform
 
-MyFolio allows developers and creators to build, customize, and publish professional portfolio websites dynamically without writing deployment code or managing separate web servers.
+MyFolio is a SaaS platform allowing developers and creators to build, customize, and publish professional portfolio websites dynamically without writing deployment code or managing separate web servers.
 
-Every user's portfolio is dynamically served from a central PostgreSQL database using Next.js App Router dynamic routing (e.g. `myfolio.com/[username]`).
+Every user's portfolio is dynamically served from a central PostgreSQL database using Next.js App Router dynamic routing (`myfolio.com/[username]`), wildcard subdomains (`username.myfolio.com`), and custom domain support (`customdomain.com`).
 
 ---
 
@@ -15,6 +15,7 @@ Every user's portfolio is dynamically served from a central PostgreSQL database 
 - **Authentication**: Auth.js (NextAuth v5) + bcryptjs
 - **Validation**: Zod
 - **Icons**: Lucide React
+- **Containerization & Web Server**: Docker & Nginx
 - **Package Manager**: npm
 
 ---
@@ -23,51 +24,55 @@ Every user's portfolio is dynamically served from a central PostgreSQL database 
 
 ```text
 myfolio/
+├── .github/
+│   └── workflows/
+│       └── ci.yml                 # GitHub Actions CI pipeline
 ├── app/
 │   ├── layout.tsx                 # Root layout with Navbar, Footer, and AuthProvider
 │   ├── page.tsx                   # MyFolio Landing Page (/)
-│   ├── globals.css                # Global CSS & Tailwind configuration
 │   ├── api/
-│   │   ├── auth/
-│   │   │   ├── [...nextauth]/
-│   │   │   │   └── route.ts       # Auth.js API route handler
-│   │   │   └── signup/
-│   │   │       └── route.ts       # User registration API (bcrypt password hashing & Zod validation)
-│   ├── login/
-│   │   └── page.tsx               # Login page with credentials auth (/login)
-│   ├── signup/
-│   │   └── page.tsx               # Signup page with form validation (/signup)
-│   ├── dashboard/
-│   │   └── page.tsx               # Protected dashboard displaying active session data (/dashboard)
-│   └── [username]/
-│       └── page.tsx               # Public portfolio dynamic route (/[username])
-├── components/
-│   ├── AuthProvider.tsx           # Client SessionProvider wrapper
-│   ├── LogoutButton.tsx           # Reusable session logout button
-│   ├── Navbar.tsx                 # Dynamic top navigation bar (state-aware)
-│   └── Footer.tsx                 # Platform footer
+│   │   ├── health/                # Liveness health check (/api/health)
+│   │   ├── ready/                 # Readiness DB health check (/api/ready)
+│   │   ├── auth/                  # Authentication endpoints
+│   │   ├── domains/               # Custom domain management & DNS verification
+│   │   ├── messages/              # Contact form lead management
+│   │   ├── portfolio/             # Portfolio settings, publishing, SEO & analytics
+│   │   ├── profile/               # User profile management
+│   │   ├── projects/              # Projects CRUD & reordering
+│   │   ├── skills/                # Skills CRUD & reordering
+│   │   ├── experience/            # Experience CRUD & reordering
+│   │   ├── education/             # Education CRUD & reordering
+│   │   └── resume/                # Resume builder & PDF generator
+│   ├── dashboard/                 # User dashboard routes
+│   └── [username]/                # Dynamic portfolio router
+├── components/                    # UI Components & Portfolio Templates
 ├── lib/
-│   ├── auth.ts                    # Auth.js / NextAuth credentials configuration
-│   ├── prisma.ts                  # Singleton Prisma Client instance
-│   └── validations/
-│       └── auth.ts                # Zod schemas for signup and login
-├── middleware.ts                  # Route protection middleware for /dashboard
+│   ├── env.ts                     # Environment variable validation
+│   ├── logger.ts                  # Production logging & PII redaction helper
+│   ├── rate-limit.ts              # Sliding-window rate limiter
+│   └── validations/               # Zod validation schemas
+├── nginx/
+│   └── default.conf               # Nginx reverse proxy configuration
 ├── prisma/
-│   └── schema.prisma              # Prisma schema (User model with email, username, password hash)
-├── types/
-│   ├── index.ts                   # TypeScript interfaces
-│   └── next-auth.d.ts             # Extended NextAuth session types
-├── .env.example                   # Environment variables template
-├── .gitignore                     # Git ignore file
-├── package.json                   # Dependencies and scripts
-└── README.md                      # Project documentation
+│   ├── schema.prisma              # Prisma schema definition
+│   └── migrations/                # Versioned database migrations
+├── scripts/
+│   ├── smoke-test.ts              # Production smoke test suite
+│   ├── test-security.ts           # Security audit test suite
+│   ├── test-analytics.ts          # Analytics unit tests
+│   ├── test-contact.ts            # Contact system unit tests
+│   └── test-resume.ts             # Resume & PDF generator unit tests
+├── Dockerfile                     # Multi-stage production Dockerfile
+├── docker-compose.yml             # Docker Compose orchestration
+├── SECURITY.md                    # Security policy & hardening documentation
+├── README.md                      # Project overview
+└── docs/
+    └── deployment.md              # Production deployment guide
 ```
 
 ---
 
-## 🚀 Getting Started
-
-Follow these steps to set up and run the application locally:
+## 🚀 Quick Start (Local Development)
 
 ### 1. Install Dependencies
 
@@ -77,13 +82,11 @@ npm install
 
 ### 2. Configure Environment Variables
 
-Copy the example environment file:
-
 ```bash
 cp .env.example .env
 ```
 
-Update `.env` with your PostgreSQL database connection string and Auth secret:
+Set required variables in `.env`:
 
 ```env
 DATABASE_URL="postgresql://postgres:password@localhost:5432/myfolio?schema=public"
@@ -91,16 +94,11 @@ AUTH_SECRET="super-secret-random-key-myfolio-2026"
 NEXTAUTH_URL="http://localhost:3000"
 ```
 
-### 3. Generate Prisma Client & Run Database Migration
-
-Ensure your PostgreSQL database server is running, then apply migrations:
+### 3. Run Prisma Migrations
 
 ```bash
-# Generate Prisma Client types
 npx prisma generate
-
-# Create and apply database migration
-npx prisma migrate dev --name init
+npx prisma migrate dev
 ```
 
 ### 4. Start Development Server
@@ -113,41 +111,40 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🔒 Authentication Flow (Step 2)
+## 🧪 Testing & Verification
 
-1. **User Registration (`/signup`)**:
-   - Accepts Full Name, Username, Email, Password, and Password Confirmation.
-   - Validated server-side via Zod schema.
-   - Passwords are salted & hashed using `bcryptjs` before PostgreSQL storage.
-   - Rejects duplicate emails and taken usernames.
+Run the full test suite (smoke tests, security tests, analytics tests, contact tests, resume PDF tests):
 
-2. **User Login (`/login`)**:
-   - Authenticates using Auth.js Credentials Provider.
-   - Verifies hashed passwords securely.
-   - Redirects to `/dashboard` upon successful login.
+```bash
+# Run all unit and smoke test suites
+npm test
 
-3. **Protected Route (`/dashboard`)**:
-   - Access restricted to authenticated users via server-side session check & middleware.
-   - Unauthenticated visitors are automatically redirected to `/login`.
-   - Displays actual authenticated user's Email, Username, and Full Name.
+# Run TypeScript compilation check
+npm run typecheck
 
-4. **User Logout**:
-   - Session destroyed via `signOut()` call.
-   - User redirected to `/login`.
+# Run ESLint check
+npm run lint
+
+# Validate production build
+npm run build
+```
 
 ---
 
-## 🧪 Verification & Code Quality
+## 🐳 Production Deployment (Docker Compose)
 
-Run checks:
+MyFolio includes a multi-stage production `Dockerfile` and `docker-compose.yml`.
 
 ```bash
-# Check TypeScript compilation
-npm run typecheck
+# 1. Build and start services in background
+docker-compose up -d --build
 
-# Check ESLint linting
-npm run lint
+# 2. Deploy database migrations
+docker-compose exec app npx prisma migrate deploy
 
-# Build production bundle
-npm run build
+# 3. Verify health
+curl http://localhost:3000/api/health
+curl http://localhost:3000/api/ready
 ```
+
+For detailed production deployment instructions, Nginx reverse proxy setup, and database backup procedures, see **[docs/deployment.md](docs/deployment.md)**.

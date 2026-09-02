@@ -5,11 +5,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
+    "start": "node .next/standalone/server.js",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "npx tsx scripts/test-security.ts && npx tsx scripts/test-analytics.ts && npx tsx scripts/test-contact.ts && npx tsx scripts/test-resume.ts",
-    "postinstall": "prisma generate"
+    "test": "tsx scripts/smoke-test.ts && tsx scripts/test-security.ts && tsx scripts/test-analytics.ts && tsx scripts/test-contact.ts && tsx scripts/test-resume.ts",
+    "smoke-test": "tsx scripts/smoke-test.ts",
+    "postinstall": "prisma generate && node scripts/fix-hyphenate.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -32,6 +33,7 @@
     "eslint-config-next": "16.3.4",
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
+    "tsx": "^4.19.3",
     "typescript": "^5"
   }
 }
