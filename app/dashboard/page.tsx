@@ -21,6 +21,7 @@ import {
   Star,
   Wrench,
   GraduationCap,
+  FileText,
 } from "lucide-react";
 import { getDegreeLabel } from "@/lib/constants/education-options";
 
@@ -484,6 +485,43 @@ export default async function DashboardPage() {
           </div>
         );
       })()}
+
+      {/* Resume Builder CTA Card */}
+      <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <h2 className="text-base font-semibold text-white flex items-center gap-2">
+            <FileText className="w-4 h-4 text-indigo-400" />
+            <span>Resume Builder</span>
+          </h2>
+          <Link
+            href="/dashboard/resume"
+            className="text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+          >
+            Build Resume →
+          </Link>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-950/90 border border-slate-800">
+          <div className="space-y-1">
+            <p className="text-sm font-bold text-white tracking-tight">
+              Create and download a professional PDF resume
+            </p>
+            <p className="text-xs text-slate-400">
+              Instantly generate an ATS-friendly PDF resume using your existing MyFolio experience, education, skills, and project data.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <Link
+              href="/dashboard/resume"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs transition-all shadow-md shadow-indigo-500/20"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Build Resume</span>
+            </Link>
+          </div>
+        </div>
+      </div>
 
       {/* Account Details & Public Link Card */}
       <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">

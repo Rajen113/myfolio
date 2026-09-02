@@ -26,6 +26,8 @@ model User {
   portfolioSettings PortfolioSettings?
   customDomains     CustomDomain[]
   portfolioViewEvents PortfolioViewEvent[]
+  contactMessages   ContactMessage[]
+  resumeSettings    ResumeSettings?
 }
 
 enum PortfolioTemplate {
@@ -90,6 +92,7 @@ model PortfolioSettings {
   updatedAt       DateTime          @updatedAt
 
   viewEvents      PortfolioViewEvent[]
+  contactMessages ContactMessage[]
 
   @@index([userId])
 }
@@ -255,4 +258,61 @@ model PortfolioViewEvent {
   @@index([userId, visitorHash, viewedAt])
   @@index([portfolioId, visitorHash])
 }
+
+enum ContactMessageStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
+model ContactMessage {
+  id          String               @id @default(cuid())
+
+  userId      String
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  portfolioId String
+  portfolio   PortfolioSettings   @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  name        String
+  email       String
+  subject     String?
+  message     String
+
+  status      ContactMessageStatus @default(UNREAD)
+
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([portfolioId, createdAt])
+  @@index([userId, status])
+}
+
+enum ResumeTemplate {
+  PROFESSIONAL
+  MODERN
+  MINIMAL
+}
+
+model ResumeSettings {
+  id              String         @id @default(cuid())
+  userId          String         @unique
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  template        ResumeTemplate @default(PROFESSIONAL)
+
+  showSummary     Boolean        @default(true)
+  showSkills      Boolean        @default(true)
+  showExperience  Boolean        @default(true)
+  showEducation   Boolean        @default(true)
+  showProjects    Boolean        @default(true)
+  showSocialLinks Boolean        @default(true)
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([userId])
+}
+
 
