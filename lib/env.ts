@@ -3,25 +3,33 @@ import fs from "fs";
 import path from "path";
 
 function loadEnvFile() {
-  if (!process.env.DATABASE_URL || !process.env.AUTH_SECRET) {
-    try {
-      const envPath = path.join(process.cwd(), ".env");
-      if (fs.existsSync(envPath)) {
-        const content = fs.readFileSync(envPath, "utf-8");
-        for (const line of content.split("\n")) {
-          const trimmed = line.trim();
-          if (trimmed && !trimmed.startsWith("#") && trimmed.includes("=")) {
-            const [key, ...valParts] = trimmed.split("=");
-            const val = valParts.join("=").replace(/^["']|["']$/g, "").trim();
-            const cleanKey = key.trim();
-            if (cleanKey && !process.env[cleanKey]) {
-              process.env[cleanKey] = val;
-            }
+  try {
+    const envPath = path.join(process.cwd(), ".env");
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, "utf-8");
+      for (const line of content.split("\n")) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith("#") && trimmed.includes("=")) {
+          const [key, ...valParts] = trimmed.split("=");
+          const val = valParts.join("=").replace(/^["']|["']$/g, "").trim();
+          const cleanKey = key.trim();
+          if (cleanKey && !process.env[cleanKey]) {
+            process.env[cleanKey] = val;
           }
         }
       }
-    } catch {
-      // Ignore reading errors
+    }
+  } catch {
+    // Ignore reading errors
+  }
+
+  // Provide development/test fallbacks if environment variables are not supplied
+  if (process.env.NODE_ENV !== "production") {
+    if (!process.env.DATABASE_URL) {
+      process.env.DATABASE_URL = "postgresql://postgres:password@localhost:5432/myfolio?schema=public";
+    }
+    if (!process.env.AUTH_SECRET) {
+      process.env.AUTH_SECRET = "super-secret-random-key-myfolio-2026";
     }
   }
 }
