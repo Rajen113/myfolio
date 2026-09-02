@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { projectSchema } from "@/lib/validations/project";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 // GET /api/projects — Retrieve authenticated user's projects
 export async function GET() {
@@ -85,6 +86,13 @@ export async function POST(req: Request) {
         displayOrder: data.displayOrder ?? nextDisplayOrder,
       },
     });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+
+    revalidatePortfolioCache({ userId, username: user?.username });
 
     return NextResponse.json(
       { success: true, message: "Project created successfully", project },

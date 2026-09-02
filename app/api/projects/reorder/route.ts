@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 // PATCH /api/projects/reorder — Update display orders for user's projects
 export async function PATCH(req: Request) {
@@ -49,6 +50,12 @@ export async function PATCH(req: Request) {
         })
       )
     );
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+    revalidatePortfolioCache({ userId, username: user?.username });
 
     return NextResponse.json({
       success: true,

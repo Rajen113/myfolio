@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { skillSchema } from "@/lib/validations/skill";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 // GET /api/skills — Retrieve authenticated user's skills
 export async function GET() {
@@ -94,6 +95,12 @@ export async function POST(req: Request) {
         displayOrder: data.displayOrder ?? nextDisplayOrder,
       },
     });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+    revalidatePortfolioCache({ userId, username: user?.username });
 
     return NextResponse.json(
       { success: true, message: "Skill added successfully", skill },

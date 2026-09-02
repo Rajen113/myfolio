@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { skillSchema } from "@/lib/validations/skill";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 interface RouteParams {
   params: Promise<{
@@ -124,6 +125,12 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       },
     });
 
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+    revalidatePortfolioCache({ userId, username: user?.username });
+
     return NextResponse.json({
       success: true,
       message: "Skill updated successfully",
@@ -171,6 +178,12 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     await prisma.skill.delete({
       where: { id },
     });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+    revalidatePortfolioCache({ userId, username: user?.username });
 
     return NextResponse.json({
       success: true,

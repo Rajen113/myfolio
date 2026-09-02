@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { profileSchema } from "@/lib/validations/profile";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 // GET /api/profile — Retrieve authenticated user's profile
 export async function GET() {
@@ -107,10 +108,14 @@ async function handleSaveProfile(req: Request) {
     });
 
     // Sync full name to User record as well
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: { name: data.fullName },
+      select: { username: true },
     });
+
+    // Revalidate public portfolio cache
+    revalidatePortfolioCache({ userId, username: updatedUser.username });
 
     return NextResponse.json({
       success: true,

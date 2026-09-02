@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { headers } from "next/headers";
-import { prisma } from "@/lib/prisma";
 import PortfolioRenderer from "@/components/portfolio/PortfolioRenderer";
 import { PortfolioData, PortfolioCustomization } from "@/types/portfolio";
 import { DEFAULT_CUSTOMIZATION } from "@/lib/constants/portfolio-customization";
 import { getPrimaryPortfolioUrl } from "@/lib/utils/portfolio-url";
 import { recordPortfolioView } from "@/lib/analytics/record-view";
+import { getPublicPortfolioData } from "@/lib/portfolio/get-public-portfolio";
 
 interface PublicPortfolioPageProps {
   params: Promise<{
@@ -14,237 +14,11 @@ interface PublicPortfolioPageProps {
   }>;
 }
 
-/**
- * Helper to lookup user by either username or verified custom domain
- */
-async function findUserForPortfolio(param: string) {
-  const cleanParam = decodeURIComponent(param).toLowerCase().trim();
-
-  // 1. Try finding user directly by unique username
-  const userByUsername = await prisma.user.findUnique({
-    where: { username: cleanParam },
-    select: {
-      id: true,
-      name: true,
-      username: true,
-      customDomains: {
-        where: { status: { in: ["VERIFIED", "ACTIVE"] } },
-        select: { domain: true, status: true, isPrimary: true },
-      },
-      profile: {
-        select: {
-          fullName: true,
-          headline: true,
-          bio: true,
-          profileImage: true,
-          location: true,
-          website: true,
-          github: true,
-          linkedin: true,
-          email: true,
-          phone: true,
-          showEmail: true,
-          showPhone: true,
-        },
-      },
-      portfolioSettings: true,
-      projects: {
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          image: true,
-          liveUrl: true,
-          githubUrl: true,
-          technologies: true,
-          featured: true,
-        },
-        orderBy: [
-          { featured: "desc" },
-          { displayOrder: "asc" },
-          { createdAt: "desc" },
-        ],
-      },
-      skills: {
-        select: {
-          id: true,
-          name: true,
-          category: true,
-          proficiency: true,
-        },
-        orderBy: [
-          { displayOrder: "asc" },
-          { createdAt: "desc" },
-        ],
-      },
-      experience: {
-        select: {
-          id: true,
-          company: true,
-          position: true,
-          employmentType: true,
-          location: true,
-          startDate: true,
-          endDate: true,
-          current: true,
-          description: true,
-        },
-        orderBy: [
-          { current: "desc" },
-          { displayOrder: "asc" },
-          { startDate: "desc" },
-        ],
-      },
-      education: {
-        select: {
-          id: true,
-          institution: true,
-          degree: true,
-          fieldOfStudy: true,
-          customDegree: true,
-          customFieldOfStudy: true,
-          location: true,
-          startDate: true,
-          endDate: true,
-          current: true,
-          grade: true,
-          description: true,
-        },
-        orderBy: [
-          { current: "desc" },
-          { displayOrder: "asc" },
-          { startDate: "desc" },
-          { createdAt: "desc" },
-        ],
-      },
-    },
-  });
-
-  if (userByUsername) return userByUsername;
-
-  // 2. If not found by username, try finding by custom domain
-  const domainCandidates = [cleanParam];
-  if (cleanParam.startsWith("www.")) {
-    domainCandidates.push(cleanParam.replace(/^www\./, ""));
-  }
-
-  const customDomain = await prisma.customDomain.findFirst({
-    where: {
-      domain: { in: domainCandidates },
-      status: { in: ["VERIFIED", "ACTIVE"] },
-    },
-    select: {
-      userId: true,
-    },
-  });
-
-  if (!customDomain) return null;
-
-  return await prisma.user.findUnique({
-    where: { id: customDomain.userId },
-    select: {
-      id: true,
-      name: true,
-      username: true,
-      customDomains: {
-        where: { status: { in: ["VERIFIED", "ACTIVE"] } },
-        select: { domain: true, status: true, isPrimary: true },
-      },
-      profile: {
-        select: {
-          fullName: true,
-          headline: true,
-          bio: true,
-          profileImage: true,
-          location: true,
-          website: true,
-          github: true,
-          linkedin: true,
-          email: true,
-          phone: true,
-          showEmail: true,
-          showPhone: true,
-        },
-      },
-      portfolioSettings: true,
-      projects: {
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          image: true,
-          liveUrl: true,
-          githubUrl: true,
-          technologies: true,
-          featured: true,
-        },
-        orderBy: [
-          { featured: "desc" },
-          { displayOrder: "asc" },
-          { createdAt: "desc" },
-        ],
-      },
-      skills: {
-        select: {
-          id: true,
-          name: true,
-          category: true,
-          proficiency: true,
-        },
-        orderBy: [
-          { displayOrder: "asc" },
-          { createdAt: "desc" },
-        ],
-      },
-      experience: {
-        select: {
-          id: true,
-          company: true,
-          position: true,
-          employmentType: true,
-          location: true,
-          startDate: true,
-          endDate: true,
-          current: true,
-          description: true,
-        },
-        orderBy: [
-          { current: "desc" },
-          { displayOrder: "asc" },
-          { startDate: "desc" },
-        ],
-      },
-      education: {
-        select: {
-          id: true,
-          institution: true,
-          degree: true,
-          fieldOfStudy: true,
-          customDegree: true,
-          customFieldOfStudy: true,
-          location: true,
-          startDate: true,
-          endDate: true,
-          current: true,
-          grade: true,
-          description: true,
-        },
-        orderBy: [
-          { current: "desc" },
-          { displayOrder: "asc" },
-          { startDate: "desc" },
-          { createdAt: "desc" },
-        ],
-      },
-    },
-  });
-}
-
 export async function generateMetadata({
   params,
 }: PublicPortfolioPageProps): Promise<Metadata> {
   const { username } = await params;
-  const user = await findUserForPortfolio(username);
+  const user = await getPublicPortfolioData(username);
 
   if (!user || !user.portfolioSettings?.isPublished) {
     return {
@@ -310,14 +84,14 @@ export default async function PublicPortfolioPage({
   params,
 }: PublicPortfolioPageProps) {
   const { username: rawUsername } = await params;
-  const user = await findUserForPortfolio(rawUsername);
+  const user = await getPublicPortfolioData(rawUsername);
 
-  // If user does not exist or portfolio is not published, return 404 (do not leak private drafts)
+  // If user does not exist or portfolio is not published, return 404
   if (!user || !user.portfolioSettings || !user.portfolioSettings.isPublished) {
     notFound();
   }
 
-  // Asynchronously record view event without blocking response
+  // Asynchronously record view event without blocking main server rendering pipeline
   try {
     const reqHeaders = await headers();
     const userAgent = reqHeaders.get("user-agent");
@@ -341,7 +115,7 @@ export default async function PublicPortfolioPage({
       countryCode,
     }).catch(() => {});
   } catch {
-    // Non-blocking fallback
+    // Non-blocking error isolation
   }
 
   // Transform Prisma records into clean PortfolioData DTO
@@ -369,13 +143,13 @@ export default async function PublicPortfolioPage({
     skills: user.skills,
     experience: user.experience.map((exp) => ({
       ...exp,
-      startDate: exp.startDate.toISOString(),
-      endDate: exp.endDate ? exp.endDate.toISOString() : null,
+      startDate: new Date(exp.startDate).toISOString(),
+      endDate: exp.endDate ? new Date(exp.endDate).toISOString() : null,
     })),
     education: user.education.map((edu) => ({
       ...edu,
-      startDate: edu.startDate.toISOString(),
-      endDate: edu.endDate ? edu.endDate.toISOString() : null,
+      startDate: new Date(edu.startDate).toISOString(),
+      endDate: edu.endDate ? new Date(edu.endDate).toISOString() : null,
     })),
   };
 

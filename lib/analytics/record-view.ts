@@ -3,6 +3,7 @@ import { isBot } from "./bot";
 import { getDeviceType } from "./device";
 import { normalizeReferrer } from "./referrer";
 import { generateVisitorHash } from "./visitor";
+import { checkRateLimit } from "../rate-limit";
 
 interface RecordViewOptions {
   userId: string;
@@ -13,23 +14,6 @@ interface RecordViewOptions {
   host?: string | null;
   ip?: string | null;
   countryCode?: string | null;
-}
-
-// In-memory short-lived cache for rate-limiting rapid refreshes (e.g. within 10 seconds)
-const recentViewCache = new Map<string, number>();
-
-/**
- * Clean up entries older than 60s to prevent memory growth
- */
-function cleanupRecentViewCache() {
-  const now = Date.now();
-  if (recentViewCache.size > 5000) {
-    for (const [key, timestamp] of recentViewCache.entries()) {
-      if (now - timestamp > 60000) {
-        recentViewCache.delete(key);
-      }
-    }
-  }
 }
 
 /**
@@ -63,16 +47,15 @@ export async function recordPortfolioView(options: RecordViewOptions): Promise<b
     const visitorHash = generateVisitorHash(ip, userAgent);
 
     // 4. Rate-limit rapid refreshes from same visitor within 10 seconds
-    const cacheKey = `${portfolioId}:${visitorHash}`;
-    const now = Date.now();
-    const lastViewTime = recentViewCache.get(cacheKey);
+    const rateLimit = checkRateLimit({
+      key: `analytics:${portfolioId}:${visitorHash}`,
+      limit: 1,
+      windowMs: 10000,
+    });
 
-    if (lastViewTime && now - lastViewTime < 10000) {
+    if (!rateLimit.success) {
       return false; // Skip duplicate rapid view
     }
-
-    recentViewCache.set(cacheKey, now);
-    cleanupRecentViewCache();
 
     // 5. Extract metadata
     const referrerDomain = normalizeReferrer(referer, host);

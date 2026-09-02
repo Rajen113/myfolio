@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { verifyDomainDns } from "@/lib/services/dns-verification";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 interface RouteParams {
   params: Promise<{
@@ -46,6 +47,8 @@ export async function POST(req: Request, { params }: RouteParams) {
         },
       });
 
+      revalidatePortfolioCache({ userId, domain: customDomain.domain });
+
       return NextResponse.json({
         success: true,
         customDomain: updatedDomain,
@@ -60,6 +63,8 @@ export async function POST(req: Request, { params }: RouteParams) {
         status: "FAILED",
       },
     });
+
+    revalidatePortfolioCache({ userId, domain: customDomain.domain });
 
     return NextResponse.json(
       {

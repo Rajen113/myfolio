@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { portfolioSettingsSchema } from "@/lib/validations/portfolio-settings";
 import { DEFAULT_CUSTOMIZATION } from "@/lib/constants/portfolio-customization";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 export async function GET() {
   try {
@@ -88,6 +89,13 @@ export async function PATCH(req: Request) {
         borderRadius: dataToUpdate.borderRadius || DEFAULT_CUSTOMIZATION.borderRadius,
       },
     });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+
+    revalidatePortfolioCache({ userId, username: user?.username });
 
     return NextResponse.json({
       message: "Portfolio customization saved successfully.",

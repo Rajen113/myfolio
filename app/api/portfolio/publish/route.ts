@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { revalidatePortfolioCache } from "@/lib/portfolio/cache";
 
 export async function POST() {
   try {
@@ -55,6 +56,8 @@ export async function POST() {
         publishedAt,
       },
     });
+
+    revalidatePortfolioCache({ userId, username: user.username });
 
     return NextResponse.json({
       message: "✓ Your portfolio is now live!",
