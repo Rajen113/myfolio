@@ -4,10 +4,11 @@ import { prisma } from "@/lib/prisma";
 import CustomizeClient from "./CustomizeClient";
 import { DEFAULT_CUSTOMIZATION } from "@/lib/constants/portfolio-customization";
 import { PortfolioCustomization, PortfolioData } from "@/types/portfolio";
+import { getPrimaryPortfolioUrl } from "@/lib/utils/portfolio-url";
 
 export const metadata = {
-  title: "Portfolio Customization — MyFolio",
-  description: "Personalize the appearance, theme, fonts, and layout of your public portfolio.",
+  title: "Portfolio Customization & SEO — MyFolio",
+  description: "Personalize the appearance, theme, fonts, layout, and SEO settings of your public portfolio.",
 };
 
 export default async function CustomizePage() {
@@ -19,7 +20,7 @@ export default async function CustomizePage() {
 
   const userId = session.user.id;
 
-  // Query user, portfolioSettings, and profile sections for live preview
+  // Query user, portfolioSettings, customDomains, and profile sections for live preview & SEO settings
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -28,6 +29,10 @@ export default async function CustomizePage() {
       username: true,
       profile: true,
       portfolioSettings: true,
+      customDomains: {
+        where: { status: { in: ["VERIFIED", "ACTIVE"] } },
+        select: { domain: true, status: true, isPrimary: true },
+      },
       projects: {
         select: {
           id: true,
@@ -122,6 +127,10 @@ export default async function CustomizePage() {
   };
 
   const currentTemplate = dbSettings?.template || "MODERN";
+  const primaryUrl = getPrimaryPortfolioUrl({
+    username: user.username,
+    customDomains: user.customDomains,
+  });
 
   const portfolioData: PortfolioData = {
     username: user.username || "username",
@@ -163,6 +172,9 @@ export default async function CustomizePage() {
         initialCustomization={initialCustomization}
         initialTemplate={currentTemplate}
         portfolioData={portfolioData}
+        initialSeoTitle={dbSettings?.seoTitle || null}
+        initialSeoDescription={dbSettings?.seoDescription || null}
+        primaryUrl={primaryUrl}
       />
     </div>
   );

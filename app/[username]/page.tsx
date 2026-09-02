@@ -252,22 +252,54 @@ export async function generateMetadata({
   }
 
   const titleName = user.profile?.fullName || user.name || user.username || "User";
-  const titleHeadline = user.profile?.headline
-    ? ` — ${user.profile.headline}`
-    : " — Portfolio";
+  const titleHeadline = user.profile?.headline || "Portfolio";
+  const generatedTitle = `${titleName} | ${titleHeadline}`;
+
+  const metaTitle = user.portfolioSettings?.seoTitle || generatedTitle;
+
+  const generatedDesc =
+    user.profile?.bio?.slice(0, 160) ||
+    `View ${titleName}'s professional portfolio, projects, skills, experience, and education on MyFolio.`;
+
+  const metaDescription = user.portfolioSettings?.seoDescription || generatedDesc;
 
   const canonicalUrl = getPrimaryPortfolioUrl({
     username: user.username,
     customDomains: user.customDomains,
   });
 
+  const ogImageUrl = `${canonicalUrl}/opengraph-image`;
+
   return {
-    title: `${titleName}${titleHeadline} | MyFolio`,
-    description:
-      user.profile?.bio?.slice(0, 160) ||
-      `View ${titleName}'s professional portfolio, projects, skills, experience, and education on MyFolio.`,
+    title: metaTitle,
+    description: metaDescription,
     alternates: {
       canonical: canonicalUrl,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+    openGraph: {
+      title: metaTitle,
+      description: metaDescription,
+      url: canonicalUrl,
+      siteName: "MyFolio",
+      type: "website",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${titleName} Portfolio Preview`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: metaTitle,
+      description: metaDescription,
+      images: [ogImageUrl],
     },
   };
 }
@@ -336,11 +368,57 @@ export default async function PublicPortfolioPage({
     borderRadius: dbSettings?.borderRadius || DEFAULT_CUSTOMIZATION.borderRadius,
   };
 
+  const canonicalUrl = getPrimaryPortfolioUrl({
+    username: user.username,
+    customDomains: user.customDomains,
+  });
+
+  const titleName = user.profile?.fullName || user.name || user.username || "User";
+
+  // Build safe JSON-LD structured data object for Person and WebSite
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Person",
+        "@id": `${canonicalUrl}#person`,
+        name: titleName,
+        jobTitle: user.profile?.headline || undefined,
+        description: user.profile?.bio || undefined,
+        url: canonicalUrl,
+        image: user.profile?.profileImage || undefined,
+        sameAs: [
+          user.profile?.website,
+          user.profile?.github,
+          user.profile?.linkedin,
+        ].filter(Boolean),
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${canonicalUrl}#website`,
+        url: canonicalUrl,
+        name: `${titleName} Portfolio`,
+        publisher: {
+          "@id": `${canonicalUrl}#person`,
+        },
+      },
+    ],
+  };
+
+  const safeJsonLdString = JSON.stringify(jsonLd).replace(/</g, "\\u003c");
+
   return (
-    <PortfolioRenderer
-      portfolioData={portfolioData}
-      template={selectedTemplate}
-      customization={customization}
-    />
+    <>
+      {/* Safe JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeJsonLdString }}
+      />
+      <PortfolioRenderer
+        portfolioData={portfolioData}
+        template={selectedTemplate}
+        customization={customization}
+      />
+    </>
   );
 }
