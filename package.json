@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx scripts/smoke-test.ts && tsx scripts/test-security.ts && tsx scripts/test-analytics.ts && tsx scripts/test-contact.ts && tsx scripts/test-resume.ts",
     "smoke-test": "tsx scripts/smoke-test.ts",
-    "postinstall": "prisma generate && node scripts/fix-hyphenate.js"
+    "postinstall": "prisma generate && node scripts/fix-hyphenate.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

@@ -1,5 +1,5 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
 try {
   const pkgPath = path.join(process.cwd(), "node_modules", "@react-pdf", "hyphenate", "package.json");
