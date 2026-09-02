@@ -9,6 +9,23 @@ export interface LogAdminActionOptions {
 }
 
 /**
+ * Redacts any potentially sensitive keys from metadata object.
+ */
+export function sanitizeAuditMetadata(metadata: Record<string, unknown> | string | null): string | null {
+  if (!metadata) return null;
+  if (typeof metadata === "string") return metadata;
+
+  const sanitized = { ...metadata };
+  const sensitiveKeys = ["password", "token", "secret", "hash", "key", "authorization"];
+  for (const k of Object.keys(sanitized)) {
+    if (sensitiveKeys.some((s) => k.toLowerCase().includes(s))) {
+      sanitized[k] = "[REDACTED]";
+    }
+  }
+  return JSON.stringify(sanitized);
+}
+
+/**
  * Creates an append-only AdminAuditLog entry.
  * Ensures metadata is sanitized and free of sensitive information.
  */
@@ -20,22 +37,7 @@ export async function logAdminAction({
   metadata,
 }: LogAdminActionOptions) {
   try {
-    let metadataStr: string | null = null;
-    if (metadata) {
-      if (typeof metadata === "string") {
-        metadataStr = metadata;
-      } else {
-        // Redact any potentially sensitive keys
-        const sanitized = { ...metadata };
-        const sensitiveKeys = ["password", "token", "secret", "hash", "key", "authorization"];
-        for (const k of Object.keys(sanitized)) {
-          if (sensitiveKeys.some((s) => k.toLowerCase().includes(s))) {
-            sanitized[k] = "[REDACTED]";
-          }
-        }
-        metadataStr = JSON.stringify(sanitized);
-      }
-    }
+    const metadataStr = sanitizeAuditMetadata(metadata);
 
     return await prisma.adminAuditLog.create({
       data: {
