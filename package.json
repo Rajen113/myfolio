@@ -8,9 +8,16 @@
     "start": "node .next/standalone/server.js",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx scripts/smoke-test.ts && tsx scripts/test-security.ts && tsx scripts/test-analytics.ts && tsx scripts/test-contact.ts && tsx scripts/test-resume.ts",
+    "test": "tsx scripts/smoke-test.ts && tsx scripts/test-security.ts && tsx scripts/test-analytics.ts && tsx scripts/test-contact.ts && tsx scripts/test-resume.ts && tsx scripts/test-admin.ts",
     "smoke-test": "tsx scripts/smoke-test.ts",
-    "postinstall": "prisma generate && node scripts/fix-hyphenate.mjs"
+    "prisma:validate": "prisma validate",
+    "postinstall": "prisma generate && node scripts/fix-hyphenate.mjs",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --max-warnings=0"
+    ]
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -31,6 +38,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.0",
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "tsx": "^4.19.3",

@@ -1,0 +1,2 @@
+echo "🚀 Running pre-push validation (TypeScript, Tests, Prisma, Build)..."
+npm run typecheck && npm test && npm run prisma:validate && npm run build
