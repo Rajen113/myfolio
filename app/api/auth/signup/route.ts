@@ -4,8 +4,28 @@ import { prisma } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validations/auth";
 import { isReservedUsername } from "@/lib/constants/reserved-usernames";
 
+import { checkRateLimit } from "@/lib/rate-limit";
+
 export async function POST(req: Request) {
   try {
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0] ||
+      req.headers.get("x-real-ip") ||
+      "unknown-ip";
+
+    const rateLimit = checkRateLimit({
+      key: `signup:${ip}`,
+      limit: 5,
+      windowMs: 15 * 60 * 1000, // 5 requests per 15 minutes
+    });
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: "Too many account creation attempts. Please try again in 15 minutes." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const validationResult = signupSchema.safeParse(body);
 

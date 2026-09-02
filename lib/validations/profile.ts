@@ -1,15 +1,5 @@
 import { z } from "zod";
-
-const optionalUrl = z
-  .string()
-  .trim()
-  .transform((val) => (val === "" ? undefined : val))
-  .pipe(
-    z
-      .string()
-      .url("Must be a valid URL (including https://)")
-      .optional()
-  );
+import { optionalSafeUrl } from "./url";
 
 const optionalEmail = z
   .string()
@@ -41,9 +31,9 @@ export const profileSchema = z.object({
     .max(100, "Location must not exceed 100 characters")
     .optional()
     .or(z.literal("")),
-  website: optionalUrl,
-  github: optionalUrl,
-  linkedin: optionalUrl,
+  website: optionalSafeUrl,
+  github: optionalSafeUrl,
+  linkedin: optionalSafeUrl,
   email: optionalEmail,
   phone: z
     .string()

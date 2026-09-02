@@ -1,15 +1,5 @@
 import { z } from "zod";
-
-const optionalUrl = z
-  .string()
-  .trim()
-  .transform((val) => (val === "" ? undefined : val))
-  .pipe(
-    z
-      .string()
-      .url("Must be a valid URL (e.g. https://example.com)")
-      .optional()
-  );
+import { optionalSafeUrl } from "./url";
 
 export const projectSchema = z.object({
   title: z
@@ -22,13 +12,9 @@ export const projectSchema = z.object({
     .trim()
     .min(1, "Description is required")
     .max(2000, "Description must not exceed 2000 characters"),
-  image: z
-    .string()
-    .trim()
-    .optional()
-    .or(z.literal("")),
-  liveUrl: optionalUrl,
-  githubUrl: optionalUrl,
+  image: optionalSafeUrl,
+  liveUrl: optionalSafeUrl,
+  githubUrl: optionalSafeUrl,
   technologies: z
     .array(
       z

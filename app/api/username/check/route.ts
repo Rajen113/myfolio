@@ -3,8 +3,28 @@ import { prisma } from "@/lib/prisma";
 import { usernameSchema } from "@/lib/validations/auth";
 import { auth } from "@/lib/auth";
 
+import { checkRateLimit } from "@/lib/rate-limit";
+
 export async function GET(req: Request) {
   try {
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0] ||
+      req.headers.get("x-real-ip") ||
+      "unknown-ip";
+
+    const rateLimit = checkRateLimit({
+      key: `username-check:${ip}`,
+      limit: 60,
+      windowMs: 60 * 1000, // 60 requests per minute
+    });
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { available: false, message: "Too many requests. Please wait a moment." },
+        { status: 429 }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const rawUsername = searchParams.get("username") || "";
     const username = rawUsername.toLowerCase().trim();
