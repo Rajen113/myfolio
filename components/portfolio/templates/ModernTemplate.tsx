@@ -436,6 +436,7 @@ export default function ModernTemplate({
                         href={project.githubUrl}
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label={`View ${project.title} source code on GitHub`}
                         className="inline-flex items-center gap-1 opacity-70 hover:opacity-100 font-medium transition-opacity"
                       >
                         <GithubIcon className="w-3.5 h-3.5" />
@@ -447,6 +448,7 @@ export default function ModernTemplate({
                         href={project.liveUrl}
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label={`View ${project.title} live demo website`}
                         className="inline-flex items-center gap-1 font-semibold transition-opacity"
                         style={{ color: primaryColor }}
                       >
