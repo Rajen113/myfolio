@@ -11,7 +11,7 @@ export interface LogAdminActionOptions {
 /**
  * Redacts any potentially sensitive keys from metadata object.
  */
-export function sanitizeAuditMetadata(metadata: Record<string, unknown> | string | null): string | null {
+export function sanitizeAuditMetadata(metadata?: Record<string, unknown> | string | null): string | null {
   if (!metadata) return null;
   if (typeof metadata === "string") return metadata;
 
