@@ -11,12 +11,16 @@ export async function middleware(req: NextRequest) {
 
   const hostname = rawHostname.toLowerCase().split(":")[0];
 
-  // Vercel deployment / preview domains should behave like
-  // the root application and must NOT be treated as a portfolio subdomain.
+  // ------------------------------------------------------------
+  // Vercel deployment / preview domains
+  // ------------------------------------------------------------
   //
   // Example:
   // myfolio-xxxxx.vercel.app
   // myfolio-git-main-xxxxx.vercel.app
+  //
+  // These should behave like the root application and must NOT
+  // be treated as portfolio subdomains.
   const isVercelHost =
     hostname.endsWith(".vercel.app") ||
     hostname === "vercel.app";
@@ -32,7 +36,7 @@ export async function middleware(req: NextRequest) {
   // These should resolve to:
   // /rajen
   //
-  // But Vercel domains must NOT go through this logic.
+  // Vercel domains must NOT go through this logic.
   const subdomain = extractSubdomain(hostname);
 
   if (subdomain && !isVercelHost) {
@@ -72,11 +76,30 @@ export async function middleware(req: NextRequest) {
     .toLowerCase()
     .trim();
 
+  // Get the hostname configured in NEXTAUTH_URL.
+  //
+  // Example on EC2:
+  // NEXTAUTH_URL="http://13.232.64.73"
+  //
+  // This makes the EC2 public IP behave as the root application
+  // host without hardcoding the IP address in middleware.
+  const appHostname = (() => {
+    try {
+      return new URL(process.env.NEXTAUTH_URL || "")
+        .hostname
+        .toLowerCase()
+        .trim();
+    } catch {
+      return "";
+    }
+  })();
+
   const isRootDomain =
     hostname === rootDomain ||
     hostname === `www.${rootDomain}` ||
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||
+    hostname === appHostname ||
     isVercelHost;
 
   if (!isRootDomain) {
@@ -113,7 +136,10 @@ export async function middleware(req: NextRequest) {
     secret: process.env.AUTH_SECRET,
   });
 
+  // ------------------------------------------------------------
   // Protected routes
+  // ------------------------------------------------------------
+
   if (
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/admin") ||
@@ -129,8 +155,10 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Redirect authenticated users away from
-  // login and signup pages
+  // ------------------------------------------------------------
+  // Redirect authenticated users away from login/signup
+  // ------------------------------------------------------------
+
   if (
     (pathname === "/login" || pathname === "/signup") &&
     token
