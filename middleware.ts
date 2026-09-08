@@ -55,9 +55,8 @@ export async function middleware(req: NextRequest) {
     // /rajen
     const url = req.nextUrl.clone();
 
-    url.pathname = `/${subdomain}${
-      pathname === "/" ? "" : pathname
-    }`;
+    url.pathname = `/${subdomain}${pathname === "/" ? "" : pathname
+      }`;
 
     return NextResponse.rewrite(url);
   }
@@ -94,14 +93,16 @@ export async function middleware(req: NextRequest) {
     }
   })();
 
+  const isIpAddress = /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname);
+
   const isRootDomain =
     hostname === rootDomain ||
     hostname === `www.${rootDomain}` ||
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||
     hostname === appHostname ||
+    isIpAddress ||
     isVercelHost;
-
   if (!isRootDomain) {
     // Skip static assets, Next.js internal paths, and API routes
     if (
@@ -120,9 +121,8 @@ export async function middleware(req: NextRequest) {
     // /rajenmandal.com
     const url = req.nextUrl.clone();
 
-    url.pathname = `/${hostname}${
-      pathname === "/" ? "" : pathname
-    }`;
+    url.pathname = `/${hostname}${pathname === "/" ? "" : pathname
+      }`;
 
     return NextResponse.rewrite(url);
   }
